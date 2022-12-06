@@ -7,6 +7,7 @@ const data = servers.data;
 /** @param {NS} _ns */
 export function init(_ns)
 {
+	if (!_ns.fileExists(servers.file)) _ns.write(servers.file, "_={}")
 	servers.init(ns = _ns)
 }
 

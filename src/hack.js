@@ -14,12 +14,13 @@ export async function main(_ns)
 	utilx.init(ns = _ns);
 	ns.tprint(Object.keys(sd.servers))
 
-	for (const s of Object.values(sd.servers).filter(s => s.root))
+	for (const s of Object.values(sd.servers).filter(s => s.root && s.name != "home"))
 	{
 		//if (ns.args.includes(s.name)) continue;
 		//crack(s)
 		if (!s.root && servers.rootable(s)) hack(s)
-		copy(s)
+		if (ns.args.includes('-c')) clear(s)
+		if (ns.args.includes('-s')) copy(s)
 		if (ns.args.includes('-k')) ns.killall(s.name)
 	}
 	msg("done")
@@ -45,9 +46,21 @@ function crack(s)
 /** @param {servers.BBServer} s */
 function copy(s)
 {
-	msg(`copy ${s.name}`)
-	ns.scp([
+	const files = [
 		'mine.js', 'util.js',
 		'servers.js', 'data.txt'
-	], s.name) || err("copy")
+	];
+
+	files.map(f => ns.fileExists(f, s.name) && (ns.rm(f, s.name) || err("rm " + f)));
+	msg(`copy ${s.name}`)
+	ns.scp(files, s.name) || err("copy")
+}
+
+/** @param {servers.BBServer} s */
+function clear(s)
+{
+	msg("clearing " + s.name)
+	for (const f of ns.ls(s.name))
+		if (f.endsWith('.js') || f.endsWith('.txt'))
+			ns.rm(f, s.name) || err("rm " + f);
 }

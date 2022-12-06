@@ -1,17 +1,15 @@
 
 import * as servers from "./servers";
 import { fn2, logn } from "./util";
-const sd = servers.data;
 
-const moneyThreshFac = 0.9;
-const secThreashFac = 1.5;
-
-/** @type {NS} */ var ns;
-
-/** @param {NS} _ns */
-export async function main(_ns)
+/** @param {NS} ns */
+export async function main(ns)
 {
-	servers.init(ns = _ns)
+	const moneyThreshFac = 0.9;
+	const secThreashFac = 1.5;
+	const sd = servers.data;
+
+	servers.init(ns)
 	ns.print("------")
 	ns.print("args: " + ns.args)
 	const threads = Number(ns.args[0])
@@ -22,11 +20,11 @@ export async function main(_ns)
 
 	const rootedServers = Object.values(sd.servers)
 		.filter(s => s.root && s.name != 'home')
-		.map(s => updateVals(sd.servers[s.name]))
+		.map(s => updateVals(ns, sd.servers[s.name]))
 	const moneyServers = rootedServers.filter(s => s.maxMoney)
 	const weightedServers = closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
 
-	if (ns.args.includes('-s')) rangeStats(rootedServers, moneyServers);
+	if (ns.args.includes('-s')) rangeStats(ns, rootedServers, moneyServers);
 	else while (true)
 	{
 		const target = selectWeighted(weightedServers, s => s.w).e;
@@ -38,26 +36,26 @@ export async function main(_ns)
 
 		if (target.secLvl > secThresh)
 		{
-			ns.tprint(`weaken ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+			//ns.tprint(`weaken ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.weaken(target.name, { threads });
 		}
 		else if (target.moneyAvail < moneyThresh)
 		{
-			ns.tprint(`grow ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+			//ns.tprint(`grow ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.grow(target.name, { threads });
 		}
 		else
 		{
-			ns.tprint(`hack ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+			//ns.tprint(`hack ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.hack(target.name, { threads });
 		}
 
-		updateVals(target)
+		updateVals(ns, target)
 	}
 }
 
-/** @type {(s:servers.BBServer) => servers.BBServer} */
-function updateVals(s)
+/** @type {(ns:NS, s:servers.BBServer) => servers.BBServer} */
+function updateVals(ns, s)
 {
 	s.moneyAvail = ns.getServerMoneyAvailable(s.name);
 	s.secLvl = ns.getServerSecurityLevel(s.name);
@@ -65,8 +63,8 @@ function updateVals(s)
 	return s
 }
 
-/** @type {(rs:servers.BBServer[], ms:servers.BBServer[]) => void} */
-function rangeStats(rs, ms)
+/** @type {(ns:NS, rs:servers.BBServer[], ms:servers.BBServer[]) => void} */
+function rangeStats(ns, rs, ms)
 {
 	//for (const s of rs)
 	//	ns.tprint(`${s.maxMoney.toExponential(2)}\t${s.maxRam}\t${(s.maxRam / 2).toFixed(2)} - ${(s.maxRam * 2).toFixed(2)}\t${s.name}`)
