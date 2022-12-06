@@ -1,17 +1,12 @@
 
-/** @type {NS}     */ var ns;
-/** @type {string} */ var host;
+const fn = (i = 0, f = 0, d = 3) => (i * 10 ** (f + d) | 0) / 10 ** (d);
 
-/** @param {NS} _ns */
-export function init(_ns)
+const logn = (x = 0, b = 10) => Math.log2(x) / Math.log2(b);
+
+function fn2(x = 0, d = 0)
 {
-    ns = _ns
-    host = ns.getHostname();
+    const e = logn(x)/3|0
+    return fn(x, -3*e, d) + " kmbtqQsS"[e]
 }
-/** @param {string} s */
-export function msg(s) { ns.tprint(`  [${host}] ${s}`) }
 
-/** @param {string} s */
-export function err(s) { msg(`error: ${s}`); }
-
-export const fn = (i = 0, f = 0, d = 3) => (i * 10 ** (f + d) | 0) / 10 ** (d);
+export { fn, logn, fn2 }

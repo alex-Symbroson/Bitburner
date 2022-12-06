@@ -1,16 +1,16 @@
 
 import * as servers from "./servers";
-import * as util from "./util";
+import * as utilx from "./utilx";
 
 const sd = servers.data;
-const { msg } = util;
+const { msg } = utilx;
 /** @type {NS}    */ var ns;
 
 /** @param {NS} _ns */
 export async function main(_ns)
 {
 	servers.init(ns = _ns);
-	util.init(ns = _ns)
+	utilx.init(ns = _ns)
 
 	const svList = Object.values(sd.servers)
 		.filter(s => s.root)

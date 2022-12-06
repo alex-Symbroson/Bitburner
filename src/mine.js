@@ -1,5 +1,6 @@
 
 import * as servers from "./servers";
+import { fn2, logn } from "./util";
 const sd = servers.data;
 
 const moneyThreshFac = 0.9;
@@ -13,20 +14,17 @@ export async function main(_ns)
 	servers.init(ns = _ns)
 	ns.print("------")
 	ns.print("args: " + ns.args)
+	const threads = Number(ns.args[0])
 
 	const hostname = ns.getHostname();
 	const host = sd.servers[hostname];
 	if (!host) throw Error(`Host ${hostname} not registered`)
 
-	const ram = 2.35 * (hostname == 'home' ? 2 : 1);
-	const threads = Math.floor(host.maxRam / ram);
 	const rootedServers = Object.values(sd.servers)
 		.filter(s => s.root && s.name != 'home')
 		.map(s => updateVals(sd.servers[s.name]))
 	const moneyServers = rootedServers.filter(s => s.maxMoney)
 	const weightedServers = closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
-
-	ns.print(`threads: ${host.maxRam} / ${ram} = ${threads}`)
 
 	if (ns.args.includes('-s')) rangeStats(rootedServers, moneyServers);
 	else while (true)
@@ -40,17 +38,17 @@ export async function main(_ns)
 
 		if (target.secLvl > secThresh)
 		{
-			ns.tprint(`weaken ${hostname} -> ${target.name}`)
+			ns.tprint(`weaken ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.weaken(target.name, { threads });
 		}
 		else if (target.moneyAvail < moneyThresh)
 		{
-			ns.tprint(`grow ${hostname} -> ${target.name}`)
+			ns.tprint(`grow ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.grow(target.name, { threads });
 		}
 		else
 		{
-			ns.tprint(`hack ${hostname} -> ${target.name}`)
+			ns.tprint(`hack ${hostname} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
 			await ns.hack(target.name, { threads });
 		}
 
@@ -102,5 +100,3 @@ function closeWeights(list, m = e => Number(e), f = 0, base = 2, stepExp = 10)
 	for (const e of map) e.w = stepExp ** (max - e.w)
 	return map
 }
-
-const logn = (x = 0, b = 10) => Math.log2(x) / Math.log2(b);

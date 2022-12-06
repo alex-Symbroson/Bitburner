@@ -1,6 +1,7 @@
 
 import * as serverData from "./serverData"
 import { rootable, BBServerData } from "./servers"
+import { fn2 } from "./util";
 
 /** @type {NS} */ var ns;
 /** @type {BBServerData} */
@@ -50,5 +51,5 @@ function status()
 	}
 	ns.tprint(`${hacked} rooted, ${hackable} rootable, ${unavail} unavailable`)
 	ns.tprint(`lv ${sd.hackLv}:${sd.crackNo}`)
-	ns.tprint(`maxRam ${ns.getPurchasedServerMaxRam()}`)
+	ns.tprint(`maxRam ${fn2(ns.getPurchasedServerMaxRam())}`)
 }

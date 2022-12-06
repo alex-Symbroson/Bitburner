@@ -27,6 +27,7 @@ export class BBServerData
 
 	hackLv = 0;
 	crackNo = 0;
+	srvLimit = 0;
 }
 
 /** @type {BBServerData} */
@@ -36,7 +37,7 @@ export const data = new BBServerData();
 export function init(_ns)
 {
 	ns = _ns
-	if (ns.fileExists(file)) Object.assign(data, load())
+	Object.assign(data, load())
 	return data
 }
 

@@ -14,6 +14,7 @@ export function update()
 {
 	data.crackNo = data.cracks.map(f => Number(ns.fileExists(f))).reduce((a, b) => a + b)
 	data.hackLv = ns.getHackingLevel();
+	data.srvLimit = ns.getPurchasedServerLimit()
 }
 
 /** @type {(name:string) => servers.BBServer} */
@@ -37,7 +38,7 @@ const save = () => { ns.write(servers.file, '_=' + JSON.stringify(data, null, " 
 /** @return {CServer} */
 const load = () => JSON.parse(String(ns.read(servers.file)).replace(/^.=/, ''))
 
-class CServer extends servers.BBServer
+export class CServer extends servers.BBServer
 {
 	/** @param {string} name */
 	constructor(name)
