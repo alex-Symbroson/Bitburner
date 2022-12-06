@@ -1,7 +1,9 @@
 
 import * as servers from "./servers";
-import { err, msg } from "./util";
+import * as util from "./util";
+
 const sd = servers.data;
+const { msg, err } = util;
 
 /** @type {NS}     */ var ns;
 
@@ -9,6 +11,7 @@ const sd = servers.data;
 export async function main(_ns)
 {
 	servers.init(ns = _ns);
+	util.init(ns = _ns);
 	ns.tprint(Object.keys(sd.servers))
 
 	for (const s of Object.values(sd.servers).filter(s => s.root))

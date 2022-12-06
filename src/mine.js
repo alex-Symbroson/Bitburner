@@ -2,6 +2,9 @@
 import * as servers from "./servers";
 const sd = servers.data;
 
+const moneyThreshFac = 0.9;
+const secThreashFac = 1.5;
+
 /** @type {NS} */ var ns;
 
 /** @param {NS} _ns */
@@ -15,31 +18,33 @@ export async function main(_ns)
 	const host = sd.servers[hostname];
 	if (!host) throw Error(`Host ${hostname} not registered`)
 
-	const ram = 2.25; // ns.getxScriptxRam(ns.getScriptName());
+	const ram = 2.35 * (hostname == 'home' ? 2 : 1);
 	const threads = Math.floor(host.maxRam / ram);
-	const rs = Object.values(sd.servers).filter(s => s.root).map(updateVals)
+	const rs = Object.values(sd.servers)
+		.filter(s => s.root && s.name != 'home')
+		.map(updateVals)
+
 	ns.print(`threads: ${host.maxRam} / ${ram} = ${threads}`)
 
-	var nhack = 1;
-	while(true)
+	while (true)
 	{
 		var target = sd.servers["iron-gym"];
 		if (ns.args.includes('-m')) target = selectWeighted(rs, s => s.moneyAvail);
 		// rs.sort((a, b) => b.moneyAvail - a.moneyAvail)[0];
-		
-		const moneyThresh = target.maxMoney * 0.75;
-		const moneyThresh2 = target.maxMoney * 0.2;
-		const secThresh = target.minSecLvl + 5;
-		
-		if (ns.args.includes('-m')) await ns.hack(target.name, { threads });
-		else if (target.secLvl > secThresh) await ns.weaken(target.name, { threads });
-		else if (target.moneyAvail < moneyThresh2 || target.moneyAvail < moneyThresh && nhack-- < 1)
-		{
-			const g = await ns.grow(target.name, { threads });
-			nhack = Math.round(0.005 / (g - 0.01)) | 0;
-			ns.print("grown by " + g + (nhack >= 1 ? " hack x" + nhack : ""));
-		}
-		else await ns.hack(target.name, { threads });
+
+		const moneyThresh = target.maxMoney * moneyThreshFac;
+		const secThresh = target.minSecLvl * secThreashFac;
+
+		ns.print(`money ${target.moneyAvail.toExponential(2)} / ${moneyThresh.toExponential(2)} / ${target.maxMoney.toExponential(2)})`)
+		ns.print(`sec   ${target.secLvl.toFixed(2)} / ${secThresh.toFixed(2)} / ${target.minSecLvl.toFixed(2)})`)
+
+		if (target.secLvl > secThresh)
+			await ns.weaken(target.name, { threads });
+		else if (target.moneyAvail < moneyThresh)
+			await ns.grow(target.name, { threads });
+		else
+			await ns.hack(target.name, { threads });
+
 		updateVals(target)
 	}
 }

@@ -1,20 +1,21 @@
 
 import * as servers from "./servers";
-import { msg } from "./util";
-const sd = servers.data;
+import * as util from "./util";
 
+const sd = servers.data;
+const { msg } = util;
 /** @type {NS}    */ var ns;
 
 /** @param {NS} _ns */
 export async function main(_ns)
 {
 	servers.init(ns = _ns);
+	util.init(ns = _ns)
 
 	const svList = Object.values(sd.servers)
 		.filter(s => s.root)
 
 	msg(svList
-		.filter(s => s.root)
 		.sort((a, b) => a.maxMoney - b.maxMoney)
 		.map(s => s.maxMoney.toExponential(2) + "\t: " + s.name)
 		.join("\n"))
@@ -22,10 +23,10 @@ export async function main(_ns)
 
 	msg(svList.map(s =>
 	{
-		const ram = 2.25 - (s.name == 'home' ? 4 : 0)//ns.getScriptRam('mine.js');
+		const ram = ns.getScriptRam('mine.js') * (s.name == 'home' ? 2 : 1)
 		const threads = Math.floor(s.maxRam / ram);
-		// ns.tprint([s.name, s.maxRam, ns.getServerMaxRam(s.name), ns.getServerUsedRam(s.name)])
-
+		if (threads <= 0) return
+		if (threads * ram > s.maxRam - ns.getServerUsedRam(s.name)) return
 		return `connect ${s.name}; run mine.js -t ${threads}; home;`
-	}).join("\n"))
+	}).filter(s => s).join("\n"))
 }

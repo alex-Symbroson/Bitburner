@@ -1,8 +1,4 @@
 
-// @ts-ignore
-import { BitBurner as NS } from "Bitburner";
-import * as servers from "./servers";
-
 /** @type {NS}     */ var ns;
 /** @type {string} */ var host;
 

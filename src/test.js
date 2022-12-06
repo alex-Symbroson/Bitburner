@@ -35,7 +35,6 @@ function scan(s)
 
 function status()
 {
-	const data = serverData.getData();
 	var hacked = 0, hackable = 0, unavail = 0;
 
 	for (const d of serverData.getServers().sort((a, b) => a.maxMoney - b.maxMoney))
@@ -46,8 +45,9 @@ function status()
 		else unavail++; // status = `unavail ${[d.reqHackLvl <= data.hackLv, d.reqPorts <= data.crackNo]}`
 
 		const moneyFmt = d.maxMoney.toExponential(2)
-		ns.tprint(`  ${moneyFmt}$\t${status}\t${d.name} ${d.reqHackLvl}:${d.reqPorts}`)
+		ns.tprint(`  ${moneyFmt}$\t${status}\t ${d.reqPorts}:${d.reqHackLvl}\t${d.name}`)
 	}
 	ns.tprint(`${hacked} rooted, ${hackable} rootable, ${unavail} unavailable`)
 	ns.tprint(`lv ${sd.hackLv}:${sd.crackNo}`)
+	ns.tprint(`maxRam ${ns.getPurchasedServerMaxRam()}`)
 }
