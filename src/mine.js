@@ -20,18 +20,18 @@ export async function main(_ns)
 
 	const ram = 2.35 * (hostname == 'home' ? 2 : 1);
 	const threads = Math.floor(host.maxRam / ram);
-	const rs = Object.values(sd.servers)
+	const rootedServers = Object.values(sd.servers)
 		.filter(s => s.root && s.name != 'home')
-		.map(updateVals)
+		.map(s => updateVals(sd.servers[s.name]))
+	const moneyServers = rootedServers.filter(s => s.maxMoney)
+	const weightedServers = closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
 
 	ns.print(`threads: ${host.maxRam} / ${ram} = ${threads}`)
 
-	while (true)
+	if (ns.args.includes('-s')) rangeStats(rootedServers, moneyServers);
+	else while (true)
 	{
-		var target = sd.servers["iron-gym"];
-		if (ns.args.includes('-m')) target = selectWeighted(rs, s => s.moneyAvail);
-		// rs.sort((a, b) => b.moneyAvail - a.moneyAvail)[0];
-
+		const target = selectWeighted(weightedServers, s => s.w).e;
 		const moneyThresh = target.maxMoney * moneyThreshFac;
 		const secThresh = target.minSecLvl * secThreashFac;
 
@@ -39,11 +39,20 @@ export async function main(_ns)
 		ns.print(`sec   ${target.secLvl.toFixed(2)} / ${secThresh.toFixed(2)} / ${target.minSecLvl.toFixed(2)})`)
 
 		if (target.secLvl > secThresh)
+		{
+			ns.tprint(`weaken ${hostname} -> ${target.name}`)
 			await ns.weaken(target.name, { threads });
+		}
 		else if (target.moneyAvail < moneyThresh)
+		{
+			ns.tprint(`grow ${hostname} -> ${target.name}`)
 			await ns.grow(target.name, { threads });
+		}
 		else
+		{
+			ns.tprint(`hack ${hostname} -> ${target.name}`)
 			await ns.hack(target.name, { threads });
+		}
 
 		updateVals(target)
 	}
@@ -58,10 +67,40 @@ function updateVals(s)
 	return s
 }
 
-/** @type {<T>(list: T[], m: (e:T) => number) => T} */
+/** @type {(rs:servers.BBServer[], ms:servers.BBServer[]) => void} */
+function rangeStats(rs, ms)
+{
+	//for (const s of rs)
+	//	ns.tprint(`${s.maxMoney.toExponential(2)}\t${s.maxRam}\t${(s.maxRam / 2).toFixed(2)} - ${(s.maxRam * 2).toFixed(2)}\t${s.name}`)
+
+	for (var r = 1; r <= 1<<8; r+=r)
+	{
+		const map = new Array(8).fill(0)
+		const weights = closeWeights(ms, s => s.maxRam, r)
+		for (var i = 0; i < 1e5; i++)
+			map[logn(selectWeighted(weights, e => e.w).w, 2)]++;
+		ns.tprint(`r ${r}: ` + map)
+	}
+	ns.tprint(ms.map(s => logn(s.maxRam, 2)))
+}
+
+/** @type {<T>(list: T[], m: (e:T) => number, invert: boolean) => T} */
 function selectWeighted(list, m = e => Number(e))
 {
-	const sum = list.map(m).reduce((a, b) => a + b);
+	const sum = list.reduce((a, b) => a + m(b), 0);
 	var r = sum * Math.random();
 	return list.find(s => (r -= m(s)) < 0);
 }
+
+/** @type {<T>(list: T[], m: (e:T) => number, f: number, base: number, stepExp: number) => {e:T, w:number}[]} */
+function closeWeights(list, m = e => Number(e), f = 0, base = 2, stepExp = 10)
+{
+	const map = list.map(e => ({ e, w: Math.abs(logn(m(e), base) - logn(f, base)) }))
+		.filter(e => isFinite(e.w)) // whyy is there a server with 0 RAM ?!
+
+	const max = Math.max.apply(null, map.map(e => e.w))
+	for (const e of map) e.w = stepExp ** (max - e.w)
+	return map
+}
+
+const logn = (x = 0, b = 10) => Math.log2(x) / Math.log2(b);

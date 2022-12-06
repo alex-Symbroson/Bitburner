@@ -23,7 +23,6 @@ export class BBServerData
 {
 	/** @type {{[x:string]:BBServer}} */
 	servers = {};
-	/** @type {BB.PurchaseableProgram[]} */
 	cracks = ['brutessh.exe', 'ftpcrack.exe', 'relaysmtp.exe', 'httpworm.exe', 'sqlinject.exe']
 
 	hackLv = 0;

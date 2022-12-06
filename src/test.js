@@ -1,17 +1,18 @@
 
 import * as serverData from "./serverData"
-import * as servers from "./servers"
-const sd = servers.data;
+import { rootable, BBServerData } from "./servers"
 
 /** @type {NS} */ var ns;
-
+/** @type {BBServerData} */
+var sd;
 
 /** @param {NS} _ns */
 export async function main(_ns)
 {
 	serverData.init(ns = _ns);
 
-	if (ns.args.includes('-u')) serverData.update();
+	serverData.update();
+	sd = serverData.getData();
 	if (ns.args.includes('-i')) status();
 	if (ns.args.includes('-s')) scan("home");
 }
@@ -41,7 +42,7 @@ function status()
 	{
 		var status = "unavail"
 		if (d.root) hacked++, status = "root"
-		else if (servers.rootable(d)) hackable++, status = "rootable"
+		else if (rootable(d)) hackable++, status = "rootable"
 		else unavail++; // status = `unavail ${[d.reqHackLvl <= data.hackLv, d.reqPorts <= data.crackNo]}`
 
 		const moneyFmt = d.maxMoney.toExponential(2)
