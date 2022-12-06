@@ -1,0 +1,12 @@
+{
+    "cSpell.enabled": false,
+    "javascript.format.placeOpenBraceOnNewLineForFunctions": true,
+    "javascript.format.placeOpenBraceOnNewLineForControlBlocks": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "bitburner.scriptRoot": "./src",
+    "bitburner.fileWatcher.enable": true,
+    "bitburner.showPushSuccessNotification": true,
+    "bitburner.showFileWatcherEnabledNotification": true,
+    "bitburner.authToken": "/4Ma6jbmDJJ2uvw71DWQcj6e8R2pNUNjk5IdrFbsVSZmuyul+bIPnq6V95azjOLt"
+}

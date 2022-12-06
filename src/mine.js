@@ -1,12 +1,10 @@
+
 import * as servers from "./servers";
 const sd = servers.data;
 
-/** @type {NS} */
-var ns;
+/** @type {NS} */ var ns;
 
-const growthFactor = 1.12;
-
-/** @param {NS} ns */
+/** @param {NS} _ns */
 export async function main(_ns)
 {
 	servers.init(ns = _ns)
@@ -46,6 +44,7 @@ export async function main(_ns)
 	}
 }
 
+/** @type {(s:servers.BBServer) => servers.BBServer} */
 function updateVals(s)
 {
 	s.moneyAvail = ns.getServerMoneyAvailable(s.name);
@@ -54,10 +53,10 @@ function updateVals(s)
 	return s
 }
 
-function selectWeighted(list, m = e => e)
+/** @type {<T>(list: T[], m: (e:T) => number) => T} */
+function selectWeighted(list, m = e => Number(e))
 {
-	const sum = [0, ...list].reduce((a, b) => a + m(b));
+	const sum = list.map(m).reduce((a, b) => a + b);
 	var r = sum * Math.random();
 	return list.find(s => (r -= m(s)) < 0);
 }
-const fn = (i, f = 0, d = 3) => (i * 10**(f+d) | 0) / 10**(d);

@@ -1,46 +1,49 @@
-/** @type {NS} */
-var ns;
-const file = "data.js"
 
-import * as servers from "servers"
+import * as servers from "./servers";
+const data = servers.data;
 
-export const data = servers.data;
+/** @type {NS} */ var ns;
 
-export function init(ns_)
+/** @param {NS} _ns */
+export function init(_ns)
 {
-	servers.init(ns = ns_)
-	if(ns.fileExists(file)) Object.assign(data, load())
+	servers.init(ns = _ns)
 }
 
 export function update()
 {
-	data.cracks = ['BruteSSH.exe', 'FTPCrack.exe', 'relaySMTP.exe', 'HTTPWorm.exe', 'SQLInject.exe']
-	data.crackNo = data.cracks.map(f => ns.fileExists(f)).reduce((a,b) => a + b)
+	data.crackNo = data.cracks.map(f => Number(ns.fileExists(f))).reduce((a, b) => a + b)
 	data.hackLv = ns.getHackingLevel();
 }
 
-export function addServer(name) {
+/** @type {(name:string) => servers.BBServer} */
+export function addServer(name)
+{
 	data.servers[name] = new CServer(name)
 	save();
 	return data.servers[name]
 }
 
-export function getData(name) { return data }
+/** @type {() => servers.BBServerData} */
+export const getData = () => data
 
-export function getServer(name = '') {
-	return name ? data.servers[name] : Object.values(data.servers)
-}
+/** @type {(name:string) => servers.BBServer} */
+export const getServer = (name) => data.servers[name]
 
-function save() { ns.write(file, '_=' + JSON.stringify(data, null, "  "), "w") }
+/** @type {() => servers.BBServer[]} */
+export const getServers = () => Object.values(data.servers);
+
+const save = () => { ns.write(servers.file, '_=' + JSON.stringify(data, null, "  "), "w") }
 /** @return {CServer} */
-function load() { return JSON.parse(ns.read(file).replace(/^.=/, '')) }
+const load = () => JSON.parse(String(ns.read(servers.file)).replace(/^.=/, ''))
 
-class CServer // : BBServer
+class CServer extends servers.BBServer
 {
-	constructor(name) {
-		// super()
+	/** @param {string} name */
+	constructor(name)
+	{
+		super()
 		this.name = name;
-		this.path = [];
 		this.root = ns.hasRootAccess(name);
 		this.maxMoney = ns.getServerMaxMoney(name);
 		this.maxRam = ns.getServerMaxRam(name);
