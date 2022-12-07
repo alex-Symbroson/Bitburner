@@ -1,5 +1,4 @@
 
-/** @type {NS} */ var ns;
 export const file = "data.txt"
 
 export class BBServer
@@ -30,25 +29,8 @@ export class BBServerData
 	srvLimit = 0;
 }
 
-/** @type {BBServerData} */
-export const data = new BBServerData();
-
-/** @param {NS} _ns */
-export function init(_ns)
-{
-	ns = _ns
-	Object.assign(data, load())
-	return data
-}
-
-function load()
+/** @param {NS} ns */
+export function load(ns)
 {
 	return JSON.parse(String(ns.read(file)).replace(/^.=/, ''))
-}
-
-/** @type {(d:string|BBServer) => boolean} */
-export function rootable(d)
-{
-	if (typeof d === "string") d = data.servers[d]
-	return d.reqHackLvl <= data.hackLv && d.reqPorts <= data.crackNo
 }
