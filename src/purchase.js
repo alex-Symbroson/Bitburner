@@ -18,7 +18,6 @@ export async function main(ns)
 /** @param {NS} ns **/
 async function daemon(ns)
 {
-    const baseName = "server";
     const maxRam = 20;
     let ramLvl = 2; // hack script size
 
@@ -44,7 +43,6 @@ async function daemon(ns)
     // flush port
     while (ns.readPort(2) != "NULL PORT DATA");
 
-    let nameCounter = 1;
     while (ramLvl < maxRam)
     {
         const p = ns.getPlayer();
@@ -73,8 +71,7 @@ async function daemon(ns)
         }
         else
         {
-            const name = baseName + nameCounter++;
-            const sname = ns.purchaseServer(name, ram);
+            const sname = ns.purchaseServer("server", ram);
             const s = new srvd.CServer(sname);
             ns.writePort(1, `sa ${s.name}`);
             servers.push(s);

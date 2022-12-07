@@ -21,6 +21,7 @@ export function update()
 	data.srvLimit = ns.getPurchasedServerLimit();
 	clearServers();
 	scanServers();
+	scanServerPaths();
 	return data;
 }
 

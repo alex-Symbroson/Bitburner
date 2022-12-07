@@ -43,6 +43,7 @@ export async function main(_ns)
 /** @param {BBServer} s */
 export function hack(s)
 {
+	ns.print(`hack ${s.name}`)
 	if (data.crackNo > 0) ns.brutessh(s.name);
 	if (data.crackNo > 1) ns.ftpcrack(s.name);
 	if (data.crackNo > 2) ns.relaysmtp(s.name);
@@ -61,7 +62,7 @@ export function copy(s)
 	];
 
 	if (s.name == "home") return;
-	msg(`copy ${s.name}`)
+	ns.print(`copy ${s.name}`)
 	for (const f of files)
 	{
 		if (ns.fileExists(f, s.name)) ns.rm(f, s.name) || err("rm " + f);
