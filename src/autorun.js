@@ -48,9 +48,21 @@ export async function main(_ns)
                 await ns.sleep(100);
             }
             while (handleMsg(String(ns.readPort(1))));
+
             stats.map((l, n) => stats[n] = stats[n].filter(p => ns.isRunning(p)))
-            ns.print(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
+            ns.tprint(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
         }
+
+        if (i % 20 == 0)
+        {
+            for(const s of srvd.getServers(s => !s.root && srvd.rootable(s)))
+            {
+                ns.tprint("hacking new server " + s.name);
+                hack.hack(s);
+                hack.copy(s);
+            }
+        }
+
         await ns.sleep(1000);
     }
 }
@@ -110,20 +122,21 @@ function updateVals(ns, s)
 /** @param {BBServer} s */
 const getAvail = s => (s.maxRam / (s.name == 'home' ? 2 : 1) - ns.getServerUsedRam(s.name));
 
+const buf = 2<<13
 /** @type {(s: BBServer, ram: number, exec: (threads: number, n: number) => number) => void} */
 function mine(s, ram, exec)
 {
     var threads = Math.floor(getAvail(s) / ram);
     if (threads <= 0) return;
 
-    var n = threads / 512 | 0;
-    // ns.tprint(`starting ${n}x512 + ${threads - n * 512} on ${s.name} [${threads}]`);
+    var n = threads / buf | 0;
+    // ns.tprint(`starting ${n}buf + ${threads - n * buf} on ${s.name} [${threads}]`);
     if (!n)
         exec(threads, 0) || utilx.err(`exec 2 ${threads} ${s.name} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
     else while (n--)
     {
-        exec(512, 1 + Math.random() * 9998 | 0) || utilx.err(`exec 1 ${threads} ${s.name} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
-        threads -= 512;
+        exec(buf, 1 + Math.random() * 9998 | 0) || utilx.err(`exec 1 ${threads} ${s.name} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
+        threads -= buf;
     }
 }
 

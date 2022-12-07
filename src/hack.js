@@ -16,41 +16,39 @@ export function init(_ns)
 {
 	utilx.init(ns = _ns)
 	data = srvd.init(ns = _ns);
-};
+}
 
 /** @param {NS} _ns */
 export async function main(_ns)
 {
 	init(ns = _ns);
+	srvd.scanServerPaths()
+	var backdoor = []
 
-	for (const s of srvd.scanServers().filter(s => s.root && s.name != "home"))
+	for (const s of srvd.getServers()) //.filter(s => !s.root))
 	{
 		//if (ns.args.includes(s.name)) continue;
-		crack(s)
-		if (!s.root && srvd.rootable(s)) hack(s)
+		if (!s.root && srvd.rootable(s)) hack(s), backdoor.push(s.name)
 		if (ns.args.includes('-x')) clear(s)
 		if (ns.args.includes('-c')) copy(s)
 		if (ns.args.includes('-k')) ns.killall(s.name)
 		await ns.sleep(10);
 	}
+
+	if (backdoor.length > 0) msg(backdoor.map(s => 
+		`home;connect ${data.servers[s].path.join(";connect ")};backdoor`).join(";\n"))
 	msg("done")
 }
 
 /** @param {BBServer} s */
-function hack(s)
-{
-	msg("hacking " + s.name)
-	ns.nuke(s.name)
-}
-
-/** @param {BBServer} s */
-function crack(s)
+export function hack(s)
 {
 	if (data.crackNo > 0) ns.brutessh(s.name);
 	if (data.crackNo > 1) ns.ftpcrack(s.name);
 	if (data.crackNo > 2) ns.relaysmtp(s.name);
 	if (data.crackNo > 3) ns.httpworm(s.name);
 	if (data.crackNo > 4) ns.sqlinject(s.name);
+	ns.nuke(s.name)
 }
 
 /** @param {BBServer} s */
@@ -62,9 +60,13 @@ export function copy(s)
 		's_weaken.js', 's_grow.js', 's_hack.js'
 	];
 
-	files.map(f => ns.fileExists(f, s.name) && (ns.rm(f, s.name) || err("rm " + f)));
+	if (s.name == "home") return;
 	msg(`copy ${s.name}`)
-	ns.scp(files, s.name) || err("copy")
+	for (const f of files)
+	{
+		if (ns.fileExists(f, s.name)) ns.rm(f, s.name) || err("rm " + f);
+		ns.scp(f, s.name) || err("copy " + f)
+	}
 }
 
 /** @param {BBServer} s */

@@ -8,8 +8,12 @@ export function init(_ns)
     ns = _ns
     host = ns.getHostname();
 }
-/** @param {string} s */
-export function msg(s) { ns.tprint(`  [${host}] ${s}`) }
 
 /** @param {string} s */
-export function err(s) { msg(`error: ${s}`); }
+export function msg(s) { ns.tprint(`  ${s}`) }
+
+/** @param {string} s */
+export function err(s) { ns.tprint(`  ERROR: ${s}`); }
+
+/** @param {string} s */
+export function wrn(s) { ns.tprint(`  WARNING: ${s}`); }

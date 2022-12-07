@@ -26,12 +26,31 @@ export function update()
 
 export function scanServerNames()
 {
-    var n = 0, i = 999;
     const list = ["home"];
-    while (i-- && n < list.length)
-        list.push(...ns.scan(list[n]).filter(s => !list.includes(s) && n++));
+    for (var n = 0, i = 999; i-- && n < list.length; n++)
+        list.push(...ns.scan(list[n]).filter(s => !list.includes(s)));
 	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
     return list;
+}
+
+export function scanServerPaths()
+{
+    const list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
+	for (var n = 0, i = 999; i-- && n < list.length; n++)
+	{
+		/** @type {string[]} */
+		var p = [list[n]], name = list[n];
+
+		const scan = ns.scan(name).filter(s => !list.includes(s))
+		for (const s of scan) list.push(s), pre[s] = name;
+		if (!n) continue
+		
+		data.servers[name].path = p
+		while (pre[name] != "home") p.push(pre[name]), name = pre[name];
+		p.reverse()
+	}
+	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
+	return list;
 }
 
 export function scanServers()
