@@ -31,6 +31,7 @@ export async function main(_ns)
 		if (ns.args.includes('-x')) clear(s)
 		if (ns.args.includes('-c')) copy(s)
 		if (ns.args.includes('-k')) ns.killall(s.name)
+		await ns.sleep(10);
 	}
 	msg("done")
 }

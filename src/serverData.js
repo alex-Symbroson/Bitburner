@@ -19,16 +19,9 @@ export function update()
 	data.crackNo = data.cracks.map(f => Number(ns.fileExists(f))).reduce((a, b) => a + b)
 	data.hackLv = ns.getHackingLevel();
 	data.srvLimit = ns.getPurchasedServerLimit();
+	clearServers();
 	scanServers();
 	return data;
-}
-
-/** @type {(name:string) => servers.BBServer} */
-export function addServer(name)
-{
-	data.servers[name] = new CServer(name)
-	save();
-	return data.servers[name]
 }
 
 export function scanServerNames()
@@ -37,27 +30,36 @@ export function scanServerNames()
     const list = ["home"];
     while (i-- && n < list.length)
         list.push(...ns.scan(list[n]).filter(s => !list.includes(s) && n++));
+	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
     return list;
 }
 
 export function scanServers()
 {
-    const list = scanServerNames().map(s => data.servers[s] = new CServer(s))
-	return (save(), list)
+    const list = scanServerNames().map(s => addServer(s, false))
+	return (saveData(), list)
 }
 
-/** @type {(name:string) => void} */
-export function rmServer(name)
+/** @type {(name:string, save:boolean) => servers.BBServer} */
+export function addServer(name, save = true)
+{
+	data.servers[name] = new CServer(name)
+	if (save) saveData();
+	return data.servers[name]
+}
+
+/** @type {(name:string, save:boolean) => void} */
+export function rmServer(name, save = true)
 {
 	delete data.servers[name]
-	save();
+	if (save) saveData();
 }
 
 export function clearServers()
 {
 	for(const k in data.servers)
 		delete data.servers[k];
-	save();
+	saveData();
 }
 
 
@@ -78,7 +80,7 @@ export const getServer = (name) => data.servers[name]
 export const getServers = (filter = a => true) => 
 	Object.values(data.servers).filter(filter);
 
-const save = () => { ns.write(servers.file, '_=' + JSON.stringify(data, null, "  "), "w") }
+const saveData = () => { ns.write(servers.file, '_=' + JSON.stringify(data, null, "  "), "w") }
 
 export class CServer extends servers.BBServer
 {

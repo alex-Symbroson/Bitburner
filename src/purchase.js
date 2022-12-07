@@ -20,57 +20,65 @@ async function daemon(ns)
 {
     const baseName = "server";
     const maxRam = 20;
-    let multi = 2; // hack script size
+    let ramLvl = 2; // hack script size
 
-    const servers = ns.getPurchasedServers().map(s => data.servers[s]);
-
+    // purchased server list
+    const servers = ns.getPurchasedServers()
+        .map(s => data.servers[s])
+        .sort((a, b) => a.maxRam - b.maxRam);
+    
+    // update ramLvl to greatest purchased server
     if (servers.length > 0)
     {
         const rams = servers.map(s => s.maxRam);
-        multi = logn(Math.max.apply(null, rams), 2)
+        ramLvl = logn(Math.max.apply(null, rams), 2)
     }
 
-    const queue = [...servers].sort((a, b) => a.maxRam - b.maxRam);
-    printCount(ns, queue)
-    ns.tprint(`${queue.length} servers, ${multi}/${maxRam} ram`)
+    // skip ram level when money is significantly greater
+    const money = ns.getPlayer().money;
+    while (ns.getPurchasedServerCost(1 << ramLvl) < money / 8) ramLvl++;
+
+    // general info
+    ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`)
+    printCount(ns, servers)
+    // flush port
+    while (ns.readPort(2) != "NULL PORT DATA");
 
     let nameCounter = 1;
-    while (multi < maxRam)
+    while (ramLvl < maxRam)
     {
         const p = ns.getPlayer();
-        const ram = Math.min(1 << 20, 1 << multi);
+        const ram = Math.min(1 << 20, 1 << ramLvl);
         const cost = ns.getPurchasedServerCost(ram);
 
         await ns.asleep(1000);
-        if (p.money < cost) await ns.asleep(1000);
-        else if (queue.length >= data.srvLimit)
+        if (p.money < cost) await ns.asleep(5000);
+        else if (servers.length >= data.srvLimit)
         {
-            if (queue[0].maxRam >= 1 << multi)
+            if (servers[0].maxRam >= 1 << ramLvl)
             {
                 ns.tprint(`ram bump ${fn2(ram)} -> ${fn2(ram + 1)}`);
-                multi++;
-                continue;
+                ramLvl++;
             }
             else
             {
-                ns.tprint(`delete ${fn2(queue[0].maxRam)} server ${queue[0].name}`);
-                ns.writePort(1, `sd ${queue[0].name}`)
-                await ns.asleep(1000);
-                ns.killall(queue[0].name);
-                ns.deleteServer(queue[0].name);
-                queue.shift();
-                printCount(ns, queue);
+                ns.writePort(1, `sd ${servers[0].name}`);
+                while (ns.readPort(2) != "registered") await ns.sleep(1000);
+
+                ns.killall(servers[0].name);
+                ns.deleteServer(servers[0].name);
+                servers.shift();
+                printCount(ns, servers);
             }
         }
         else
         {
             const name = baseName + nameCounter++;
-            ns.tprint(`purchase ${fn2(ram)} server ${name} for ${fn2(cost)}`);
             const sname = ns.purchaseServer(name, ram);
             const s = new srvd.CServer(sname);
             ns.writePort(1, `sa ${s.name}`);
-            queue.push(s);
-            printCount(ns, queue);
+            servers.push(s);
+            printCount(ns, servers);
         }
     }
     ns.tprint("maxed on servers, terminated");
@@ -82,6 +90,6 @@ async function daemon(ns)
 function printCount(ns, queue)
 {
     const counts = /** @type {{[x:string]: number}} */ ({});
-    queue.map(s => fn2(s.maxRam)).forEach(s => counts[s] = (counts[s] || 0) + 1)
-    ns.tprint(Object.keys(counts).map(k => `${counts[k]}x${k}`).join(", "))
+    queue.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
+    ns.tprint(Object.keys(counts).map(k => `${counts[k]} ${fn2(Number(k))} [${fn2(ns.getPurchasedServerCost(Number(k)))}]`).join(", "))
 }

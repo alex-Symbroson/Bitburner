@@ -21,38 +21,44 @@ export async function main(_ns)
     data = srvd.init(ns = _ns);
     utilx.init(ns = _ns);
     hack.init(ns = _ns);
+    // flush port
+    while (ns.readPort(1) != "NULL PORT DATA");
 
 	if (ns.args.includes('-w')) weighted = true;
     const slaved = ns.args.includes("-s");
-    const svList = srvd.getServers(s => s.root)
     hackScript.ram = ns.getScriptRam(hackScript.name)
     hackSlave.ram = ns.getScriptRam(hackSlave.name)
 
-    if (!slaved) for (const s of svList) mine(s, hackScript.ram,
-        (t, n) => ns.exec(hackScript.name, s.name, t, t, '--', n));
+    if (!slaved)
+    {
+        const svList = srvd.getServers(s => s.root)
+        for (const s of svList) mine(s, hackScript.ram,
+            (t, n) => ns.exec(hackScript.name, s.name, t, t, '--', n));
+    }
 
     for (var i = 0; ; i++)
     {
-        while (handleMsg(String(ns.readPort(1))));
+        const svList = srvd.getServers(s => s.root)
         if (slaved && i % 2 == 0)
         {
-            for (const s of srvd.getServers(s => s.root)) updateVals(ns, s)
+            for (const s of svList) updateVals(ns, s)
             for (const s of svList.filter(s => s.maxRam - ns.getServerUsedRam(s.name) > hackSlave.ram))
             {
-                slave(s);
+                slave(s, svList);
                 await ns.sleep(100);
             }
+            while (handleMsg(String(ns.readPort(1))));
             stats.map((l, n) => stats[n] = stats[n].filter(p => ns.isRunning(p)))
-            ns.tprint(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
+            ns.print(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
         }
         await ns.sleep(1000);
     }
 }
 
-/** @type {(s: BBServer) => void} */
-function slave(host)
+/** @type {(s: BBServer, svList: BBServer[]) => void} */
+function slave(host, svList)
 {
-    const rootedServers = srvd.getServers(s => s.root && s.name != 'home')
+    const rootedServers = svList.filter(s => s.name != 'home')
     const moneyServers = rootedServers.filter(s => s.maxMoney)
     const weightedServers = !weighted ? moneyServers.map(e => ({e, w:1})) :
         closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
@@ -76,17 +82,17 @@ function enslave(host, ws, t, n)
 
     if (target.secLvl > secThresh)
     {
-        ns.print(`weaken ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+        //ns.print(`weaken ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
         pid = ns.exec("s_weaken.js", host.name, t, target.name, t, '--', n) << 2 | 0
     }
     else if (target.moneyAvail < moneyThresh)
     {
-        ns.print(`grow ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+        //ns.print(`grow ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
         pid = ns.exec("s_grow.js", host.name, t, target.name, t, '--', n) << 2 | 1
     }
     else
     {
-        ns.print(`hack ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
+        //ns.print(`hack ${host.name} ${fn2(host.maxRam)} -> ${fn2(target.maxRam)} ${target.name}`)
         pid = ns.exec("s_hack.js", host.name, t, target.name, t, '--', n) << 2 | 2
     }
     stats[pid % 4].push(pid >> 2);
@@ -131,7 +137,10 @@ function handleMsg(s)
     const m = s.split(/\s+/);
     switch (m[0])
     {
-        case "sd": srvd.rmServer(m[1]); break;
+        case "sd": 
+                srvd.rmServer(m[1]);
+                ns.writePort(2, "registered");
+                break;
         case "sa": registerMiner(srvd.addServer(m[1])); break;
         default: throw Error(`unhadled msg cmd '${m[1]}`);
     }
