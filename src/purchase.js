@@ -1,6 +1,6 @@
 
 import * as srvd from "./serverData";
-import { BBServerData } from "./servers";
+import { BBServer, BBServerData } from "./servers";
 import { fn2, logn } from "./util";
 
 /** @type {Partial<BBServerData>} */
@@ -31,7 +31,7 @@ async function daemon(ns)
     }
 
     const queue = [...servers].sort((a, b) => a.maxRam - b.maxRam);
-    ns.tprint(queue.map(s => fn2(s.maxRam)).join(", "))
+    printCount(ns, queue)
     ns.tprint(`${queue.length} servers, ${multi}/${maxRam} ram`)
 
     let nameCounter = 1;
@@ -59,7 +59,7 @@ async function daemon(ns)
                 ns.killall(queue[0].name);
                 ns.deleteServer(queue[0].name);
                 queue.shift();
-                ns.tprint(queue.map(s => fn2(s.maxRam)).join(", "))
+                printCount(ns, queue);
             }
         }
         else
@@ -68,10 +68,20 @@ async function daemon(ns)
             ns.tprint(`purchase ${fn2(ram)} server ${name} for ${fn2(cost)}`);
             const sname = ns.purchaseServer(name, ram);
             const s = new srvd.CServer(sname);
-            ns.writePort(1, `sa ${s}`);
+            ns.writePort(1, `sa ${s.name}`);
             queue.push(s);
-            ns.tprint(queue.map(s => fn2(s.maxRam)).join(", "));
+            printCount(ns, queue);
         }
     }
     ns.tprint("maxed on servers, terminated");
+}
+
+/**
+ * @type {(ns:NS, list:BBServer[]) => void} queue
+ */
+function printCount(ns, queue)
+{
+    const counts = /** @type {{[x:string]: number}} */ ({});
+    queue.map(s => fn2(s.maxRam)).forEach(s => counts[s] = (counts[s] || 0) + 1)
+    ns.tprint(Object.keys(counts).map(k => `${counts[k]}x${k}`).join(", "))
 }

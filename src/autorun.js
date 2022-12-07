@@ -116,7 +116,7 @@ function mine(s, ram, exec)
         exec(threads, 0) || utilx.err(`exec 2 ${threads} ${s.name} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
     else while (n--)
     {
-        exec(512, 1 + Math.random() * 9998 | 0) || utilx.err(`exec 1 ${threads}`)
+        exec(512, 1 + Math.random() * 9998 | 0) || utilx.err(`exec 1 ${threads} ${s.name} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
         threads -= 512;
     }
 }

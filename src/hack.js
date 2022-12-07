@@ -12,14 +12,17 @@ let data = {};
 var ns;
 
 /** @param {NS} _ns */
-export const init = _ns => ns = _ns;
+export function init(_ns)
+{
+	utilx.init(ns = _ns)
+	data = srvd.init(ns = _ns);
+};
 
 /** @param {NS} _ns */
 export async function main(_ns)
 {
-	utilx.init(ns = _ns);
-	data = srvd.init(ns = _ns);
-	
+	init(ns = _ns);
+
 	for (const s of srvd.scanServers().filter(s => s.root && s.name != "home"))
 	{
 		//if (ns.args.includes(s.name)) continue;
