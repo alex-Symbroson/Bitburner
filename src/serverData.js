@@ -1,5 +1,6 @@
 
 import * as servers from "./servers";
+import * as utilx from "./utilx";
 
 /** @type {servers.BBServerData} */
 let data = new servers.BBServerData();
@@ -9,7 +10,7 @@ let data = new servers.BBServerData();
 /** @param {NS} _ns */
 export function init(_ns)
 {
-	ns = _ns;
+	utilx.init(ns = _ns);
 	if (!_ns.fileExists(servers.file)) _ns.write(servers.file, "_={}")
 	return update();
 }
@@ -22,6 +23,7 @@ export function update()
 	clearServers();
 	scanServers();
 	scanServerPaths();
+	saveData()
 	return data;
 }
 
@@ -34,7 +36,7 @@ export function scanServerNames()
     return list;
 }
 
-export function scanServerPaths()
+function scanServerPaths()
 {
     const list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
 	for (var n = 0, i = 999; i-- && n < list.length; n++)
@@ -100,7 +102,7 @@ export const getServer = (name) => data.servers[name]
 export const getServers = (filter = a => true) => 
 	Object.values(data.servers).filter(filter);
 
-const saveData = () => { ns.write(servers.file, '_=' + JSON.stringify(data, null, "  "), "w") }
+const saveData = () => utilx.save(servers.file, data);
 
 export class CServer extends servers.BBServer
 {

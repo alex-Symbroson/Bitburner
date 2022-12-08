@@ -1,6 +1,6 @@
 
-import { BBServer, BBServerData } from "./servers";
-import { closeWeights, fn, fn2, selectWeighted } from "./util";
+import { BBServer } from "./servers";
+import { closeWeights, fn, selectWeighted } from "./util";
 import * as utilx from "./utilx";
 
 /** @type {NS}    */ var ns;
@@ -24,9 +24,10 @@ export function slave(host, svList)
 {
     const rootedServers = svList.filter(s => s.name != 'home')
     const moneyServers = rootedServers.filter(s => s.maxMoney)
+    if (!moneyServers.length) return;
+
     const weightedServers = !weighted ? moneyServers.map(e => ({ e, w: 1 })) :
         closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
-
     mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n))
 }
 

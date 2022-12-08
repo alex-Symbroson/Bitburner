@@ -1,4 +1,5 @@
 
+import { copy } from "./clear";
 import * as enslave from "./enslave";
 import * as hack from "./hack";
 import { buy_upgrade } from "./nodehack";
@@ -24,7 +25,7 @@ export async function main(_ns)
     while (ns.readPort(1) != "NULL PORT DATA");
 
     var lastStats = "";
-
+    
     for (var i = 0; ; i++)
     {
         const svList = srvd.getServers(s => s.root)
@@ -38,10 +39,13 @@ export async function main(_ns)
             }
             while (handleMsg(String(ns.readPort(1))));
 
-            stats.map((l, n) => stats[n] = stats[n].filter(p => ns.isRunning(p)))
-            if (String(stats) != lastStats)
-                ns.tprint(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
-            lastStats = String(stats);
+            if (i % 4 == 0)
+            {
+                stats.map((l, n) => stats[n] = stats[n].filter(p => ns.isRunning(p)))
+                if (String(stats) != lastStats)
+                    ns.tprint(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
+                lastStats = String(stats);
+            }
         }
 
         if (i % 20 == 0) hackNewServers();
@@ -60,9 +64,21 @@ function updateVals(ns, s)
     return s;
 }
 
-/**
- * @param {string} s
- */
+function hackNewServers()
+{
+    for (const s of srvd.getServers(s => srvd.rootable(s)))
+    {
+        hack.crack(ns, s.name);
+        if (s.root) continue;
+
+        ns.nuke(s.name);
+        s.root = true;
+        copy(ns, s.name);
+        ns.tprint(`  EXEC home;connect ${data.servers[s.name].path.join(";connect ")};backdoor`);
+    }
+}
+
+/** @param {string} s */
 function handleMsg(s)
 {
     if (s == "NULL PORT DATA") return false;
@@ -81,21 +97,5 @@ function handleMsg(s)
     return true;
 }
 
-function hackNewServers()
-{
-    srvd.scanServerPaths()
-    for (const s of srvd.getServers(s => !s.root && srvd.rootable(s)))
-    {
-        hack.hack(s);
-        hack.copy(s);
-        ns.tprint(`  EXEC home;connect ${data.servers[s.name].path.join(";connect ")};backdoor`)
-    }
-}
-
-/**
- * @param {BBServer} s
- */
-function registerMiner(s)
-{
-    hack.copy(s);
-}
+/** @param {BBServer} s */
+const registerMiner = s => copy(ns, s.name);
