@@ -1,53 +1,36 @@
 
-import { clear, copy } from "./clear";
+import { copy } from "./clear";
 import * as srvd from "./serverData";
-import { BBServerData } from "./servers";
-import * as utilx from "./utilx";
-
-const { msg } = utilx;
-
-/** @type {Partial<BBServerData>} */
-let data = {};
-
-/** @param {NS} _ns */
-export function init(_ns)
-{
-	utilx.init(_ns)
-	data = srvd.init(_ns);
-}
 
 /** @param {NS} ns */
-export async function main(ns)
+export function init(ns)
 {
-	init(ns);
-	var backdoor = []
+	srvd.init(ns);
+}
 
-	for (const s of srvd.getServers()) //.filter(s => !s.root))
+/** @type {(ns: NS, s: NSServer) => void} s */
+export function checkServer(ns, s)
+{
+	const data = srvd.updateBasic();
+	if (!srvd.rootable(s)) return;
+	if (s.openPortCount < data.crackNo) crack(ns, s.hostname);
+	if (!s.hasAdminRights) ns.nuke(s.hostname);
+	copy(ns, s.hostname);
+
+	if (!s.backdoorInstalled)
 	{
-		//if (ns.args.includes(s.name)) continue;
-		if (srvd.rootable(s)) 
-		{
-			if (!s.root) ns.nuke(s.name);
-			crack(ns, s.name);
-			backdoor.push(s.name)
-		}
-		if (ns.args.includes('-x')) clear(ns, s.name)
-		if (ns.args.includes('-c')) copy(ns, s.name)
-		if (ns.args.includes('-k')) ns.killall(s.name)
-		await ns.sleep(10);
+		const path = srvd.scanServerPath(s.hostname)
+		ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`);
 	}
-
-	if (backdoor.length > 0) msg(backdoor.map(s =>
-		`home;connect ${data.servers[s].path.join(";connect ")};backdoor`).join(";\n"))
-	msg("done")
 }
 
 /** @type {(ns:NS, s:string) => void} */
 export function crack(ns, s)
 {
-	if (data.crackNo > 0) ns.brutessh(s);
-	if (data.crackNo > 1) ns.ftpcrack(s);
-	if (data.crackNo > 2) ns.relaysmtp(s);
-	if (data.crackNo > 3) ns.httpworm(s);
-	if (data.crackNo > 4) ns.sqlinject(s);
+	const crackNo = srvd.updateBasic().crackNo;
+	if (crackNo > 0) ns.brutessh(s);
+	if (crackNo > 1) ns.ftpcrack(s);
+	if (crackNo > 2) ns.relaysmtp(s);
+	if (crackNo > 3) ns.httpworm(s);
+	if (crackNo > 4) ns.sqlinject(s);
 }

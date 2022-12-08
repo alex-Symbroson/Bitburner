@@ -4,14 +4,15 @@ export async function main(ns)
 {
     const spat = ns.args.filter(s => String(s)[0] != '-')[0]
     const pat = RegExp(spat ? String(ns.args[0]) : ".*")
-    for (const s of scanServerNames(ns).slice(1).filter(s => pat.test(s) && ns.hasRootAccess(s)))
+    const srvs = scanServerNames(ns).slice(1).filter(s => pat.test(s) && ns.hasRootAccess(s));
+    for (const s of srvs)
     {
-        ns.tprint(s)
         if (ns.args.includes("-k")) ns.killall(s);
         if (ns.args.includes("-c")) clear(ns, s);
         if (ns.args.includes("-x")) copy(ns, s);
         await ns.sleep(10)
     }
+    ns.tprint(`processed ${srvs.length} servers`)
 }
 
 /** @param {NS} ns */
@@ -44,7 +45,7 @@ export function copy(ns, s)
 	if (s == "home") return;
 	for (const f of files)
 	{
-		if (ns.fileExists(f, s)) ns.rm(f, s) || err(ns, "rm " + f);
+		// if (ns.fileExists(f, s)) ns.rm(f, s) || err(ns, "rm " + f);
 		ns.scp(f, s) || err(ns, "copy " + f)
 	}
 }

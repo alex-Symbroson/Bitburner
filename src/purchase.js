@@ -1,6 +1,6 @@
 
 import * as srvd from "./serverData";
-import { BBServer, BBServerData } from "./servers";
+import { BBServerData } from "./servers";
 import { fn2, logn } from "./util";
 
 /** @type {Partial<BBServerData>} */
@@ -13,13 +13,19 @@ export async function main(ns)
     if (ns.args[0] == "-i") ns.tprint(ns.getPurchasedServerCost(Number(ns.args[0])).toExponential(2))
     else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]))
     else if (ns.args[0] == "-d") await daemon(ns)
+    else {
+        const servers = ns.getPurchasedServers()
+            .map(s => data.servers[s])
+            .sort((a, b) => a.maxRam - b.maxRam);
+        printCount(ns, servers)
+    }
 }
 
 /** @param {NS} ns **/
 async function daemon(ns)
 {
     const maxRam = 20;
-    let ramLvl = 2; // hack script size
+    let ramLvl = 4; // hack script size
 
     // purchased server list
     const servers = ns.getPurchasedServers()
@@ -60,11 +66,11 @@ async function daemon(ns)
             }
             else
             {
-                ns.writePort(1, `sd ${servers[0].name}`);
+                ns.writePort(1, `sd ${servers[0].hostname}`);
                 while (ns.readPort(2) != "registered") await ns.sleep(1000);
 
-                ns.killall(servers[0].name);
-                ns.deleteServer(servers[0].name);
+                ns.killall(servers[0].hostname);
+                ns.deleteServer(servers[0].hostname);
                 servers.shift();
                 printCount(ns, servers);
             }
@@ -72,8 +78,8 @@ async function daemon(ns)
         else
         {
             const sname = ns.purchaseServer("server", ram);
-            const s = new srvd.CServer(sname);
-            ns.writePort(1, `sa ${s.name}`);
+            const s = ns.getServer(sname);
+            ns.writePort(1, `sa ${s.hostname}`);
             servers.push(s);
             printCount(ns, servers);
         }
@@ -82,11 +88,11 @@ async function daemon(ns)
 }
 
 /**
- * @type {(ns:NS, list:BBServer[]) => void} queue
+ * @type {(ns:NS, list:NSServer[]) => void}
  */
-function printCount(ns, queue)
+function printCount(ns, servers)
 {
     const counts = /** @type {{[x:string]: number}} */ ({});
-    queue.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
+    servers.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
     ns.tprint(Object.keys(counts).map(k => `${counts[k]} ${fn2(Number(k))} [${fn2(ns.getPurchasedServerCost(Number(k)))}]`).join(", "))
 }

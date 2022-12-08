@@ -979,6 +979,12 @@ export interface SleeveInformation {
 export type SleeveTask = any;
 
 /**
+ * Object representing the current work.
+ * @public
+ */
+export type WorkData = { type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string };
+
+/**
  * Object representing a port. A port is a serialized queue.
  * @public
  */
@@ -2350,7 +2356,7 @@ export interface Singularity {
    *
    * @returns - An object representing the current work. Fields depend on the kind of work.
    */
-  getCurrentWork(): any | null;
+  getCurrentWork(): WorkData | null;
 }
 
 /**

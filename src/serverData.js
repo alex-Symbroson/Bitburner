@@ -7,6 +7,8 @@ let data = new servers.BBServerData();
 
 /** @type {NS} */ var ns;
 
+export const cracks = ['brutessh.exe', 'ftpcrack.exe', 'relaysmtp.exe', 'httpworm.exe', 'sqlinject.exe']
+
 /** @param {NS} _ns */
 export function init(_ns)
 {
@@ -15,17 +17,26 @@ export function init(_ns)
 	return update();
 }
 
-export function update()
+export function updateBasic()
 {
-	data.crackNo = data.cracks.map(f => Number(ns.fileExists(f))).reduce((a, b) => a + b)
+	data.crackNo = getCrackNo(ns)
 	data.hackLv = ns.getHackingLevel();
 	data.srvLimit = ns.getPurchasedServerLimit();
-	clearServers();
-	scanServers();
-	scanServerPaths();
-	saveData()
 	return data;
 }
+
+export function update()
+{
+	updateBasic();
+	clearServers();
+	scanServers();
+	return data;
+}
+
+/** @type {(ns:NS) => number} */
+export const getCrackNo = ns =>
+	cracks.filter(f => ns.fileExists(f)).length;
+
 
 export function scanServerNames()
 {
@@ -36,24 +47,19 @@ export function scanServerNames()
     return list;
 }
 
-function scanServerPaths()
+export function scanServerPath(name = "home")
 {
-    const list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
+    const path = [name], list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
 	for (var n = 0, i = 999; i-- && n < list.length; n++)
 	{
-		/** @type {string[]} */
-		var p = [list[n]], name = list[n];
-
-		const scan = ns.scan(name).filter(s => !list.includes(s))
-		for (const s of scan) list.push(s), pre[s] = name;
-		if (!n) continue
-		
-		data.servers[name].path = p
-		while (pre[name] != "home") p.push(pre[name]), name = pre[name];
-		p.reverse()
+		const scan = ns.scan(list[n]).filter(s => !list.includes(s))
+		for (const s of scan) list.push(s), pre[s] = list[n];
+		if (list[n] == name) break;
 	}
+		
+	while (pre[name] != "home") path.push(pre[name]), name = pre[name];
 	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
-	return list;
+	return path.reverse()
 }
 
 export function scanServers()
@@ -62,10 +68,10 @@ export function scanServers()
 	return (saveData(), list)
 }
 
-/** @type {(name:string, save:boolean) => servers.BBServer} */
-export function addServer(name, save = true)
+/** @type {(name:string, save:boolean, bdoor:boolean) => NSServer} */
+export function addServer(name, save = true, bdoor = false)
 {
-	data.servers[name] = new CServer(name)
+	data.servers[name] = ns.getServer(name)
 	if (save) saveData();
 	return data.servers[name]
 }
@@ -85,38 +91,21 @@ export function clearServers()
 }
 
 
-/** @type {(d:string|servers.BBServer) => boolean} */
+/** @type {(s:string|NSServer) => boolean} */
 export function rootable(s)
 {
 	if (typeof s === "string") s = data.servers[s]
-	return data.hackLv >= s.reqHackLvl && data.crackNo >= s.reqPorts
+	return data.hackLv >= s.requiredHackingSkill && data.crackNo >= s.numOpenPortsRequired
 }
 
 /** @type {() => servers.BBServerData} */
 export const getData = () => data
 
-/** @type {(name:string) => servers.BBServer} */
-export const getServer = (name) => data.servers[name]
+/** @type {(name:string) => NSServer} */
+export const getServer = name => data.servers[name]
 
-/** @type {(filter?: (s: servers.BBServer) => boolean) => servers.BBServer[]} */
+/** @type {(filter?: (s: NSServer) => boolean) => NSServer[]} */
 export const getServers = (filter = a => true) => 
 	Object.values(data.servers).filter(filter);
 
 const saveData = () => utilx.save(servers.file, data);
-
-export class CServer extends servers.BBServer
-{
-	/** @param {string} name */
-	constructor(name)
-	{
-		super()
-		this.name = name;
-		this.root = ns.hasRootAccess(name);
-		this.maxMoney = ns.getServerMaxMoney(name);
-		this.maxRam = ns.getServerMaxRam(name);
-		this.growth = ns.getServerGrowth(name);
-		this.minSecLvl = ns.getServerMinSecurityLevel(name);
-		this.reqPorts = ns.getServerNumPortsRequired(name);
-		this.reqHackLvl = ns.getServerRequiredHackingLevel(name);
-	}
-}
