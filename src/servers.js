@@ -3,7 +3,7 @@ export const file = "data.txt"
 
 export class BBServerData
 {
-	/** @type {{[x:string]:NSServer}} */
+	/** @type {{[x:string]:Server}} */
 	servers = {};
 
 	hackLv = 0;

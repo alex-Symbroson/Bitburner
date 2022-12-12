@@ -54,7 +54,7 @@ function handleMsg(s)
     return true;
 }
 
-/** @param {NSServer} s */
+/** @param {Server} s */
 function registerMiner(s)
 {
     copy(ns, s.hostname);

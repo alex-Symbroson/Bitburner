@@ -40,35 +40,35 @@ export const getCrackNo = ns =>
 
 export function scanServerNames()
 {
-    const list = ["home"];
-    for (var n = 0, i = 999; i-- && n < list.length; n++)
-        list.push(...ns.scan(list[n]).filter(s => !list.includes(s)));
+	const list = ["home"];
+	for (var n = 0, i = 999; i-- && n < list.length; n++)
+		list.push(...ns.scan(list[n]).filter(s => !list.includes(s)));
 	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
-    return list;
+	return list;
 }
 
 export function scanServerPath(name = "home")
 {
-    const path = [name], list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
+	const path = [name], list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
 	for (var n = 0, i = 999; i-- && n < list.length; n++)
 	{
 		const scan = ns.scan(list[n]).filter(s => !list.includes(s))
 		for (const s of scan) list.push(s), pre[s] = list[n];
 		if (list[n] == name) break;
 	}
-		
-	while (pre[name] != "home") path.push(pre[name]), name = pre[name];
+
+	while (pre[name] != "home" && !getServer(name).backdoorInstalled) path.push(pre[name]), name = pre[name];
 	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
 	return path.reverse()
 }
 
 export function scanServers()
 {
-    const list = scanServerNames().map(s => addServer(s, false))
+	const list = scanServerNames().map(s => addServer(s, false))
 	return (saveData(), list)
 }
 
-/** @type {(name:string, save:boolean, bdoor:boolean) => NSServer} */
+/** @type {(name:string, save:boolean, bdoor:boolean) => Server} */
 export function addServer(name, save = true, bdoor = false)
 {
 	data.servers[name] = ns.getServer(name)
@@ -85,27 +85,27 @@ export function rmServer(name, save = true)
 
 export function clearServers()
 {
-	for(const k in data.servers)
+	for (const k in data.servers)
 		delete data.servers[k];
 	saveData();
 }
 
 
-/** @type {(s:string|NSServer) => boolean} */
+/** @type {(s:string|Server) => boolean} */
 export function rootable(s)
 {
-	if (typeof s === "string") s = data.servers[s]
-	return data.hackLv >= s.requiredHackingSkill && data.crackNo >= s.numOpenPortsRequired
+	const serv = typeof s === "string" ? getServer(s) : s
+	return data.hackLv >= serv.requiredHackingSkill && data.crackNo >= serv.numOpenPortsRequired
 }
 
 /** @type {() => servers.BBServerData} */
 export const getData = () => data
 
-/** @type {(name:string) => NSServer} */
-export const getServer = name => data.servers[name]
+/** @type {(name:string) => Server} */
+export const getServer = name => data.servers[name] || ns.getServer(name)
 
-/** @type {(filter?: (s: NSServer) => boolean) => NSServer[]} */
-export const getServers = (filter = a => true) => 
+/** @type {(filter?: (s: Server) => boolean) => Server[]} */
+export const getServers = (filter = a => true) =>
 	Object.values(data.servers).filter(filter);
 
 const saveData = () => utilx.save(servers.file, data);

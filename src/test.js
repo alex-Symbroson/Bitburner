@@ -11,7 +11,7 @@ let data = {};
 export async function main(_ns)
 {
 	data = srvd.init(ns = _ns);
-	
+
 	if (ns.args.includes('-c')) srvd.clearServers();
 	if (ns.args.includes('-s')) scan();
 	if (ns.args.includes('-i')) status();
@@ -29,24 +29,29 @@ function scan()
 
 function status()
 {
-	var rooted = 0, hackable = 0, unavail = 0;
+	var rooted = 0, hackable = 0, unavail = 0, filter = '';
+	if (ns.args.includes('-f')) filter = String(ns.args[ns.args.indexOf('-f') + 1]);
 
 	for (const d of srvd.getServers().sort((a, b) => srvScore(a) - srvScore(b)))
 	{
 		var status = "unavail"
-		if (d.hasAdminRights) status = "root", rooted++;
+		if (d.purchasedByPlayer) status = "purch", rooted++;
+		else if (d.hasAdminRights) status = "root", rooted++;
 		else if (srvd.rootable(d)) status = "avail", hackable++;
 		else unavail++; // status = `unavail ${[d.requiredHackingSkill <= data.hackLv, d.numOpenPortsRequired <= data.crackNo]}`
 
+		if (filter && !status.startsWith(filter)) continue;
+
 		const moneyFmt = d.moneyMax.toExponential(2)
-		ns.tprint(`  ${moneyFmt}$\t${status}\t ${d.numOpenPortsRequired}:${d.requiredHackingSkill}\t${d.hostname}`)
+		const path = d.hasAdminRights || d.backdoorInstalled ? "" : srvd.scanServerPath(d.hostname).join("/")
+		ns.tprint(`  ${moneyFmt}$\t${status}\t ${d.numOpenPortsRequired}:${d.requiredHackingSkill}\t${path || d.hostname}`)
 	}
 	ns.tprint(`${rooted} rooted, ${hackable} rootable, ${unavail} unavailable`)
 	ns.tprint(`lv ${data.hackLv}:${data.crackNo}`)
 	ns.tprint(`maxRam ${fn2(ns.getPurchasedServerMaxRam())}`)
 }
 
-/** @param {NSServer} s */
+/** @param {Server} s */
 function srvScore(s)
 {
 	return logn(s.requiredHackingSkill, 3) + s.numOpenPortsRequired

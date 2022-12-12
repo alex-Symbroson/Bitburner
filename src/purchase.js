@@ -1,4 +1,3 @@
-
 import * as srvd from "./serverData";
 import { BBServerData } from "./servers";
 import { fn2, logn } from "./util";
@@ -41,7 +40,7 @@ async function daemon(ns)
 
     // skip ram level when money is significantly greater
     const money = ns.getPlayer().money;
-    while (ns.getPurchasedServerCost(1 << ramLvl) < money / 8) ramLvl++;
+    while (ns.getPurchasedServerCost(1 << ramLvl) < money / 4) ramLvl++;
 
     // general info
     ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`)
@@ -61,7 +60,7 @@ async function daemon(ns)
         {
             if (servers[0].maxRam >= 1 << ramLvl)
             {
-                ns.tprint(`ram bump ${fn2(ram)} -> ${fn2(ram + 1)}`);
+                ns.tprint(`ram bump ${fn2(ramLvl)} -> ${fn2(ramLvl + 1)}`);
                 ramLvl++;
             }
             else
@@ -84,11 +83,11 @@ async function daemon(ns)
             printCount(ns, servers);
         }
     }
-    ns.tprint("maxed on servers, terminated");
+    ns.tprint("WARNING: maxed on servers, terminated");
 }
 
 /**
- * @type {(ns:NS, list:NSServer[]) => void}
+ * @type {(ns:NS, list:Server[]) => void}
  */
 function printCount(ns, servers)
 {

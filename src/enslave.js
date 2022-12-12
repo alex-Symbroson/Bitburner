@@ -18,7 +18,7 @@ export function init(_ns, stats)
     hackSlave.ram = ns.getScriptRam(hackSlave.hostname)
 }
 
-/** @type {(s: NSServer, svList: NSServer[]) => void} */
+/** @type {(s: Server, svList: Server[]) => void} */
 export function slave(host, svList)
 {
     const rootedServers = svList.filter(s => s.hostname != 'home')
@@ -30,7 +30,7 @@ export function slave(host, svList)
     mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n))
 }
 
-/** @type {(host: NSServer, ws: {e:NSServer, w:number}[], t: number, n: number) => number} */
+/** @type {(host: Server, ws: {e:Server, w:number}[], t: number, n: number) => number} */
 function enslave(host, ws, threads, n)
 {
     const moneyThreshFac = 0.9;
@@ -55,10 +55,10 @@ function enslave(host, ws, threads, n)
     return pid >> 2;
 }
 
-/** @param {NSServer} s */
+/** @param {Server} s */
 const getAvail = s => (s.maxRam / (s.hostname == 'home' ? 1.2 : 1) - ns.getServerUsedRam(s.hostname));
 
-/** @type {(s: NSServer, ram: number, exec: (threads: number, n: number) => number) => void} */
+/** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => void} */
 function mine(s, ram, exec)
 {
     var threads = Math.floor(getAvail(s) / ram);

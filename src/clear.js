@@ -1,4 +1,3 @@
-
 /** @param {NS} ns */
 export async function main(ns)
 {
@@ -8,8 +7,8 @@ export async function main(ns)
     for (const s of srvs)
     {
         if (ns.args.includes("-k")) ns.killall(s);
-        if (ns.args.includes("-c")) clear(ns, s);
-        if (ns.args.includes("-x")) copy(ns, s);
+        if (ns.args.includes("-c")) copy(ns, s);
+        if (ns.args.includes("-x")) clear(ns, s);
         await ns.sleep(10)
     }
     ns.tprint(`processed ${srvs.length} servers`)
@@ -36,12 +35,7 @@ export function clear(ns, s)
 /** @type {(ns:NS, s:string) => void} */
 export function copy(ns, s)
 {
-	const files = [
-		'mine.js', 'util.js',
-		'servers.js', 'data.txt',
-		's_weaken.js', 's_grow.js', 's_hack.js'
-	];
-
+	const files = ['s_weaken.js', 's_grow.js', 's_hack.js'];
 	if (s == "home") return;
 	for (const f of files)
 	{

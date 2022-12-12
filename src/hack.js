@@ -1,6 +1,12 @@
-
 import { copy } from "./clear";
 import * as srvd from "./serverData";
+
+/** @param {NS} ns */
+export async function main(ns)
+{
+    init(ns);
+    checkServer(ns, srvd.getServer(String(ns.args[0])))
+}
 
 /** @param {NS} ns */
 export function init(ns)
@@ -8,11 +14,11 @@ export function init(ns)
 	srvd.init(ns);
 }
 
-/** @type {(ns: NS, s: NSServer) => void} s */
+/** @type {(ns: NS, s: Server) => void} s */
 export function checkServer(ns, s)
 {
 	const data = srvd.updateBasic();
-	if (!srvd.rootable(s)) return;
+	if (s.hostname == "home" || s.purchasedByPlayer || !srvd.rootable(s)) return;
 	if (s.openPortCount < data.crackNo) crack(ns, s.hostname);
 	if (!s.hasAdminRights) ns.nuke(s.hostname);
 	copy(ns, s.hostname);
