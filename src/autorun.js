@@ -5,13 +5,16 @@ import * as hack from "./hack";
 import { copy } from "./clear";
 import { buy_upgrade } from "./nodehack";
 import { BBServerData } from "./servers";
+import { SProcStats } from "./classes";
 
 /** @type {NS}    */ var ns;
 
 /** @type {Partial<BBServerData>} */
 let data = {};
 
-const stats = [[0], [0], [0]]
+
+/** @type {SStats} */
+const stats = { idle: 0, all: new SProcStats(), active: {} }
 
 /** @param {NS} _ns */
 export async function main(_ns)
@@ -26,8 +29,8 @@ export async function main(_ns)
     for (var i = 0; ; i++)
     {
         if (i % 2 == 0) while (handleMsg(String(ns.readPort(1))));
-        if (i % 2 == 0) await enslaveServers();
         if (i % 20 == 0) await checkNewServers();
+        if (i % 2 == 0) await enslaveServers();
         if (i % 4 == 0) printStats();
 
         buy_upgrade(ns);
@@ -47,23 +50,25 @@ function handleMsg(s)
             srvd.rmServer(m[1]);
             ns.writePort(2, "registered");
             break;
-        case "sa": registerMiner(srvd.addServer(m[1])); break;
+        case "sa": registerMiner(m[1]); break;
         default: throw Error(`unhadled msg cmd '${m[1]}`);
     }
 
     return true;
 }
 
-/** @param {Server} s */
+/** @param {string} s */
 function registerMiner(s)
 {
-    copy(ns, s.hostname);
-    srvd.addServer(s.hostname);
+    copy(ns, s);
+    srvd.addServer(s);
 }
 
 async function enslaveServers()
 {
+    stats.idle = 0
     const svList = srvd.getServers(s => s.hasAdminRights)
+
     for (const s of svList)
     {
         srvd.addServer(s.hostname)
@@ -77,6 +82,9 @@ async function checkNewServers()
 {
     for (const s of srvd.scanServers())
     {
+        if (s.moneyMax && !stats.active[s.hostname])
+            stats.active[s.hostname] = { grow: [], weaken: [], hack: [] }
+
         hack.checkServer(ns, s);
         await ns.sleep(10);
     }
@@ -85,8 +93,27 @@ async function checkNewServers()
 var lastStats = "";
 function printStats()
 {
-    stats.map((l, n) => stats[n] = stats[n].filter(p => ns.isRunning(p)))
-    if (String(stats) != lastStats)
-        ns.tprint(`${stats[0].length} weakening, ${stats[1].length} growing, ${stats[2].length} hacking`)
-    lastStats = String(stats);
+    /** @type {{[x in SAction]: number}} */
+    const max = { grow: 0, weaken: 0, hack: 0 };
+
+    /** @type {SAction} */ var a;
+    for (a in stats.all)
+    {
+        // grow hack weaken
+        const ended = stats.all[a].filter(p => !ns.isRunning(p));
+        stats.all[a] = stats.all[a].filter(p => !ended.includes(p));
+        for (const s in stats.active)
+        {
+            stats.active[s][a] = stats.active[s][a].filter(p => !ended.includes(p))
+            if (max[a] < stats.active[s][a].length) max[a] = stats.active[s][a].length
+        }
+    }
+
+    if (JSON.stringify(stats.all) != lastStats)
+        ns.tprint(
+            `${stats.all.weaken.length} [${max.weaken}] weakening, ` +
+            `${stats.all.grow.length} [${max.grow}] growing, ` +
+            `${stats.all.hack.length} [${max.hack}] hacking, ` +
+            `${stats.idle} idle`)
+    lastStats = JSON.stringify(stats.all);
 }

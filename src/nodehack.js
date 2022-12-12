@@ -17,7 +17,7 @@ const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 100
 /** @param {NS} ns */
 export function buy_upgrade(ns)
 {
-    var num_purchase_level = 4;
+    var num_purchase_level = 10;
     ns.hacknet.purchaseNode();
 
     for (var i = 0; i < ns.hacknet.numNodes(); i++)
