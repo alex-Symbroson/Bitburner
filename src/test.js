@@ -1,4 +1,3 @@
-
 import * as srvd from "./serverData"
 import { BBServerData } from "./servers";
 import { fn2, logn } from "./util";
@@ -44,7 +43,9 @@ function status()
 
 		const moneyFmt = d.moneyMax.toExponential(2)
 		const path = d.hasAdminRights || d.backdoorInstalled ? "" : srvd.scanServerPath(d.hostname).join("/")
-		ns.tprint(`  ${moneyFmt}$\t${status}\t ${d.numOpenPortsRequired}:${d.requiredHackingSkill}\t${path || d.hostname}`)
+		ns.tprint(
+			`  ${moneyFmt}$\t${status}${status == "root" && !d.backdoorInstalled ? '*' : ' '}\t` +
+			`${d.numOpenPortsRequired}:${d.requiredHackingSkill}\t${path || d.hostname}`)
 	}
 	ns.tprint(`${rooted} rooted, ${hackable} rootable, ${unavail} unavailable`)
 	ns.tprint(`lv ${data.hackLv}:${data.crackNo}`)

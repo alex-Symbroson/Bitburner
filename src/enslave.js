@@ -51,7 +51,7 @@ function enslave(host, ws, threads, n)
     else if (t.moneyAvailable < moneyThresh) action = "grow"
     else action = "hack"
 
-    if (_stats.active[t.hostname][action].length >= maxSame) return (_stats.idle++, -1)
+    // if (_stats.active[t.hostname][action].length >= maxSame) return (_stats.idle++, -1)
     
     const fMoney = ` ${fn2(t.moneyAvailable)}/${fn2(moneyThresh)}/${fn2(t.moneyMax)} `;
     const fSec = ` ${t.hackDifficulty|0}/${secThresh|0}/${t.minDifficulty|0} `;

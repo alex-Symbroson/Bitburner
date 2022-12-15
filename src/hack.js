@@ -17,6 +17,7 @@ export function init(ns)
 /** @type {(ns: NS, s: Server) => void} s */
 export function checkServer(ns, s)
 {
+	srvd.scanServers();
 	const data = srvd.updateBasic();
 	if (s.hostname == "home" || s.purchasedByPlayer || !srvd.rootable(s)) return;
 	if (s.openPortCount < data.crackNo) crack(ns, s.hostname);
@@ -26,7 +27,8 @@ export function checkServer(ns, s)
 	if (!s.backdoorInstalled)
 	{
 		const path = srvd.scanServerPath(s.hostname)
-		ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`);
+		if (path.length < 4 || ns.args.includes("-a"))
+			ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`);
 	}
 }
 

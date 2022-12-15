@@ -1,4 +1,3 @@
-
 import * as servers from "./servers";
 import * as utilx from "./utilx";
 
@@ -68,7 +67,7 @@ export function scanServers()
 	return (saveData(), list)
 }
 
-/** @type {(name:string, save:boolean, bdoor:boolean) => Server} */
+/** @type {(name:string, save?:boolean, bdoor?:boolean) => Server} */
 export function addServer(name, save = true, bdoor = false)
 {
 	data.servers[name] = ns.getServer(name)
@@ -76,7 +75,7 @@ export function addServer(name, save = true, bdoor = false)
 	return data.servers[name]
 }
 
-/** @type {(name:string, save:boolean) => void} */
+/** @type {(name:string, save?:boolean) => void} */
 export function rmServer(name, save = true)
 {
 	delete data.servers[name]
