@@ -4,9 +4,9 @@ import * as utilx from "./utilx";
 
 /** @type {NS}    */ var ns;
 
-const minThreads = 512; // minimum thread batch size per server
+const minThreads = 128; // minimum thread batch size per server
 const numProc = 32; // maximum procs (thread batches) per server
-const maxSame = 16; // max procs targeting same server+action
+const maxSame = 25; // max procs targeting same server+action
 
 export const hackSlave = { hostname: "s_grow.js", ram: 1.75 }
 

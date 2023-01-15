@@ -30,4 +30,10 @@ export function closeWeights(list, m = e => Number(e), f = 0, base = 2, stepExp 
 	return map
 }
 
-export { fn, logn, fn2 }
+/** @type {(arr: number[]) => number} */
+const sum = arr => arr.reduce((a, b) => a + b, 0);
+
+/** @type {(arr: number[]) => number} */
+const mean = arr => sum(arr) / arr.length;
+
+export { fn, sum, mean, logn, fn2 }

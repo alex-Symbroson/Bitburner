@@ -18,15 +18,16 @@ const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 100
 export function buy_upgrade(ns)
 {
     var num_purchase_level = 10;
-    ns.hacknet.purchaseNode();
+    while (can_purchase(ns, ns.hacknet.getPurchaseNodeCost() / 10))
+        ns.hacknet.purchaseNode();
 
     for (var i = 0; i < ns.hacknet.numNodes(); i++)
     {
-        if (can_purchase(ns, ns.hacknet.getCoreUpgradeCost(i, 1)))
+        while (can_purchase(ns, ns.hacknet.getCoreUpgradeCost(i, 1)))
             ns.hacknet.upgradeCore(i, 1);
-        else if (can_purchase(ns, ns.hacknet.getRamUpgradeCost(i, 1)))
+        while (can_purchase(ns, ns.hacknet.getRamUpgradeCost(i, 1)))
             ns.hacknet.upgradeRam(i, 1);
-        else if (can_purchase(ns, ns.hacknet.getLevelUpgradeCost(i, num_purchase_level)))
+        while (can_purchase(ns, ns.hacknet.getLevelUpgradeCost(i, num_purchase_level)))
             ns.hacknet.upgradeLevel(i, num_purchase_level);
     }
 }
