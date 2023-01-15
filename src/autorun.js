@@ -1,3 +1,5 @@
+// ./clear.js -c -k -x; ./autorun.js; ./purchase.js -d; ./gang.js; ./tor.js
+// ./clear.js -c -k -x; ./autorun.js; ./gang.js; ./tor.js
 
 import * as srvd from "./serverData";
 import * as enslave from "./enslave";
@@ -71,7 +73,8 @@ async function enslaveServers()
 
     for (const s of svList)
     {
-        srvd.addServer(s.hostname)
+        try { srvd.addServer(s.hostname); }
+        catch(e) { continue; }
         if (s.maxRam - s.ramUsed < enslave.hackSlave.ram) continue
         enslave.slave(s, svList);
         await ns.sleep(10);

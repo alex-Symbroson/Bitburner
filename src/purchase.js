@@ -48,7 +48,7 @@ async function daemon(ns)
     // flush port
     while (ns.readPort(2) != "NULL PORT DATA");
 
-    while (ramLvl < maxRam)
+    while (ramLvl <= maxRam)
     {
         const p = ns.getPlayer();
         const ram = Math.min(1 << 20, 1 << ramLvl);
@@ -77,6 +77,7 @@ async function daemon(ns)
         else
         {
             const sname = ns.purchaseServer("server", ram);
+            if (!sname) continue;
             const s = ns.getServer(sname);
             ns.writePort(1, `sa ${s.hostname}`);
             servers.push(s);

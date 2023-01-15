@@ -27,7 +27,7 @@ export function checkServer(ns, s)
 	if (!s.backdoorInstalled)
 	{
 		const path = srvd.scanServerPath(s.hostname)
-		if (path.length < 4 || ns.args.includes("-a")) backdoor(ns, path)
+		backdoor(ns, path);
 	}
 }
 
@@ -35,7 +35,7 @@ export function checkServer(ns, s)
 function backdoor(ns, path)
 {
 	try { var pid = ns.exec("backdoor.js", "home", 1, ...path); ns.tprint(`  backdooring ${path[path.length-1]} : ${pid}`); }
-	catch(e) { ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`); }
+	catch(e) { if (path.length < 4 || ns.args.includes("-a")) ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`); }
 }
 
 /** @type {(ns:NS, s:string) => void} */

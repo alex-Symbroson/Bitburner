@@ -7,9 +7,9 @@ export async function main(ns)
     for (const s of srvs)
     {
         if (ns.args.includes("-k")) ns.killall(s);
-        if (ns.args.includes("-c")) copy(ns, s);
         if (ns.args.includes("-x")) clear(ns, s);
-        await ns.sleep(10)
+        if (ns.args.includes("-c")) copy(ns, s);
+        await ns.sleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)
 }

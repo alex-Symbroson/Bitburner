@@ -4,9 +4,9 @@ import { fn, fn2, mean, selectRandom } from "./util";
 
 const names = [
 	"Aaron,Bernd,Chloe,Dennis,Erika,Fred,Geralt,Hans,Irma,Joseph,Karla,Leni,Moses,Nero,Oslo,Paul,Quaxo,Ramses,Selena,Toby,Ulus,Veronika,Werner,Xenia,Yelena,Zorus"
-	.split(","),
+		.split(","),
 	"Anna,Bianca,Carlos,Dorid,Erwin,Fiona,Gina,Helen,Ingo,Justus,Kratos,Lennister,Mia,Nina,Olga,Pale,Quinh,Reya,Septimus,Teyra,Uwe,Voltolos,Wanda,Xerxes,Ylios,Zenita"
-	.split(","),
+		.split(","),
 ]
 
 const trainings = ["Train Combat", "Train Hacking", "Train Charisma"];
@@ -14,11 +14,15 @@ const trainings = ["Train Combat", "Train Hacking", "Train Charisma"];
 const crimes = "Phishing,Identity Theft,Money Laundering,Cyberterrorism".split(",")
 const niceThings = ["Ethical Hacking"]
 const equipment = {
-	Weapon: ["Baseball Bat","Katana","Glock 18C","P90C","Steyr AUG","AK-47","M15A10 Assault Rifle","AWM Sniper Rifle"],
-	Armor: ["Bulletproof Vest","Full Body Armor","Liquid Body Armor","Graphene Plating Armor"],
-	Vehicle: ["Ford Flex V20","ATX1070 Superbike","Mercedes-Benz S9001","White Ferrari"],
-	Rootkit: ["NUKE Rootkit","Soulstealer Rootkit","Demon Rootkit","Hmap Node","Jack the Ripper"],
-	Augmentation: ["Bionic Arms","Bionic Legs","Bionic Spine","BrachiBlades","Nanofiber Weave","Synthetic Heart","Synfibril Muscle","BitWire","Neuralstimulator","DataJack","Graphene Bone Lacings"]
+	Weapon: ["Baseball Bat", "Katana", "Glock 18C", "P90C", "Steyr AUG", "AK-47", "M15A10 Assault Rifle", "AWM Sniper Rifle"],
+	Armor: ["Bulletproof Vest", "Full Body Armor", "Liquid Body Armor", "Graphene Plating Armor"],
+	Vehicle: ["Ford Flex V20", "ATX1070 Superbike", "Mercedes-Benz S9001", "White Ferrari"],
+	Rootkit: ["NUKE Rootkit", "Soulstealer Rootkit", "Demon Rootkit", "Hmap Node", "Jack the Ripper"],
+	Augmentation: [
+		"Bionic Arms", "Bionic Legs", "Bionic Spine", "BrachiBlades", "Nanofiber Weave", "Synthetic Heart", "Synfibril Muscle", 
+		"BitWire", "Neuralstimulator", "DataJack", 
+		"Graphene Bone Lacings"],
+	AugmentationHack: ["BitWire", "Neuralstimulator", "DataJack"]
 }
 
 /*
@@ -80,10 +84,7 @@ export async function main(ns)
 {
 	const memberNames = ns.gang.getMemberNames();
 	for (const name of memberNames)
-	{
-		const task = ns.gang.getMemberInformation(name).task;
-		tasks[name] = task.startsWith("Train") ? "Money Laundering" : task;
-	}
+		tasks[name] = ns.gang.getMemberInformation(name).task;
 
 	while (1)
 	{
@@ -92,7 +93,6 @@ export async function main(ns)
 			.sort((a, b) => b.hack_exp - a.hack_exp)
 		var wantedLevel = 0;
 		const hackMean = mean(members.map(m => m.hack));
-		ns.tprint("mean: " + hackMean)
 
 		for (const m of members)
 		{
@@ -107,21 +107,26 @@ export async function main(ns)
 				Object.assign(m, ns.gang.getMemberInformation(m.name));
 			}
 
+			// ns.tprint(m.name + (m.name == ethical ? "*" : "") + ": " + (m.hack >= hackMean) + " " + fn2(m.hack) + "/" + fn2(hackMean) + " " + m.task);
 			if (m.hack > 1e3 && m.hack >= hackMean)
-				setMemberTask(ns, m.name, "Money Laundering");
+			{
+				if (m.name != ethical) setMemberTask(ns, m.name, "Money Laundering");
+			}
 			else
 				setMemberTask(ns, m.name, "Train Hacking");
 
-			for (const e of [...equipment.Augmentation, ...equipment.Rootkit])
+			for (const e of [...equipment.AugmentationHack, ...equipment.Rootkit])
 			{
 				if (m.upgrades.includes(e) || m.augmentations.includes(e)) continue;
 				const cost = ns.gang.getEquipmentCost(e);
-				if (cost * 50 < player.money) {
-					ns.tprint(`purchasing ${e} ${fn2(cost)} for ${m.name}`);
+				if (cost * 50 < player.money)
+				{
+					// ns.tprint(`purchasing ${e} ${fn2(cost)} for ${m.name}`);
 					ns.gang.purchaseEquipment(m.name, e) || ns.tprint("error buying");
+					player.money -= cost;
 				}
 			}
-			
+
 			let task = ""
 			/*
 			else if (res.hack < 1) task = "Train Hacking"
@@ -154,8 +159,9 @@ export async function main(ns)
 
 		if (!ethical)
 		{
-			ethical = selectRandom(memberNames.filter(n => tasks[n] == "Money Laundering"));
-			setMemberTask(ns, ethical, "Ethical Hacking")
+			const newEthic = selectRandom(memberNames.filter(n => tasks[n] == "Money Laundering"));
+			if (setMemberTask(ns, newEthic, "Ethical Hacking"))
+				ethical = newEthic;
 		}
 
 		while (ns.gang.canRecruitMember())
@@ -170,19 +176,16 @@ export async function main(ns)
 	}
 }
 
-/** @type {(ns: NS, name: string, task?: string) => void}*/
+/** @type {(ns: NS, name: string, task?: string) => boolean} */
 function setMemberTask(ns, name, task = null)
 {
-	if (tasks[name] == "Ethical Hacking") ethical = null;
-	if (!task) task = tasks[name];
-	else if (tasks[name] != task && !task.startsWith("Train")) {
-		if (task.startsWith("Train")) tasks[name] += " ";
-		else tasks[name] = task;
-	}
-
+	if (name == ethical) ethical = null;
 	if (tasks[name] == task) return;
-	ns.tprint(`task ${name}: ${task}.`);
-	// ns.gang.setMemberTask(name, task);
+	if (!task) task = tasks[name];
+	else if (tasks[name] != task) tasks[name] = task;
+
+	// ns.tprint(`task ${name}: ${task}.`);
+	return ns.gang.setMemberTask(name, task) || ns.tprint("task failed") || false;
 }
 
 // Credit: Mysteyes. https://discord.com/channels/415207508303544321/415207923506216971/940379724214075442
