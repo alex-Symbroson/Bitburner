@@ -160,7 +160,7 @@ export async function main(ns)
 		if (!ethical)
 		{
 			const newEthic = selectRandom(memberNames.filter(n => tasks[n] == "Money Laundering"));
-			if (setMemberTask(ns, newEthic, "Ethical Hacking"))
+			if (newEthic && setMemberTask(ns, newEthic, "Ethical Hacking"))
 				ethical = newEthic;
 		}
 

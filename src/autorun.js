@@ -33,7 +33,7 @@ export async function main(_ns)
         if (i % 2 == 0) while (handleMsg(String(ns.readPort(1))));
         if (i % 20 == 0) await checkNewServers();
         if (i % 2 == 0) await enslaveServers();
-        if (i % 4 == 0) printStats();
+        if (i % 10 == 0) printStats();
 
         buy_upgrade(ns);
         await ns.sleep(1000);

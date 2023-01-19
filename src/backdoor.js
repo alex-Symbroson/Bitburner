@@ -8,5 +8,5 @@ export async function main(ns)
 			return ns.tprint("ERROR: connect " + s)
 	await ns.singularity.installBackdoor();
 	ns.singularity.connect("home");
-	ns.tprint("bdoor done");
+	ns.tprint(ns.args.pop() + " done");
 }

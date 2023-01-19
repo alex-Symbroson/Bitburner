@@ -12,13 +12,13 @@ export async function main(ns)
 }
 
 /** @type {(ns:NS, cost:number) => boolean} ns */
-const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 100
+const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 30
 
 /** @param {NS} ns */
 export function buy_upgrade(ns)
 {
     var num_purchase_level = 10;
-    while (can_purchase(ns, ns.hacknet.getPurchaseNodeCost() / 10))
+    while (can_purchase(ns, ns.hacknet.getPurchaseNodeCost() / 3))
         ns.hacknet.purchaseNode();
 
     for (var i = 0; i < ns.hacknet.numNodes(); i++)
@@ -27,7 +27,7 @@ export function buy_upgrade(ns)
             ns.hacknet.upgradeCore(i, 1);
         while (can_purchase(ns, ns.hacknet.getRamUpgradeCost(i, 1)))
             ns.hacknet.upgradeRam(i, 1);
-        while (can_purchase(ns, ns.hacknet.getLevelUpgradeCost(i, num_purchase_level)))
-            ns.hacknet.upgradeLevel(i, num_purchase_level);
+        while (can_purchase(ns, ns.hacknet.getLevelUpgradeCost(i, 1)))
+            ns.hacknet.upgradeLevel(i, 1);
     }
 }
