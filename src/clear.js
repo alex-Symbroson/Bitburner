@@ -6,9 +6,9 @@ export async function main(ns)
     const srvs = scanServerNames(ns).slice(1).filter(s => pat.test(s) && ns.hasRootAccess(s));
     for (const s of srvs)
     {
-        if (ns.args.includes("-k")) ns.killall(s);
-        if (ns.args.includes("-x")) clear(ns, s);
-        if (ns.args.includes("-c")) copy(ns, s);
+        if (!ns.args.length || ns.args.includes("-k")) ns.killall(s);
+        if (!ns.args.length || ns.args.includes("-x")) clear(ns, s);
+        if (!ns.args.length || ns.args.includes("-c")) copy(ns, s);
         await ns.sleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)

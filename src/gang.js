@@ -82,6 +82,8 @@ var ethical = "";
 /** @param {import("../Bitburner.t").NS} ns */
 export async function main(ns)
 {
+	if (!ns.gang.inGang()) return;
+	
 	const memberNames = ns.gang.getMemberNames();
 	for (const name of memberNames)
 		tasks[name] = ns.gang.getMemberInformation(name).task;

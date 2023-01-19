@@ -40,7 +40,7 @@ type ScriptArg = string | number | boolean;
 type FilenameOrPID = number | string;
 
 /** @public */
-interface Player {
+export interface Player {
   hp: HP;
   skills: Skills;
   exp: Skills;
@@ -2359,6 +2359,12 @@ export interface Singularity {
   getCurrentWork(): WorkData | null;
 }
 
+  /** Easter egg function */
+export interface HeartBreak {
+  /** Easter egg function */
+  break: () => number;
+}
+
 /**
  * Hacknet API
  * @remarks
@@ -4595,6 +4601,12 @@ export interface NS {
    * RAM cost: 0 GB
    */
   readonly singularity: Singularity;
+  
+  /**
+   * Easteregg Function.
+   * RAM cost: 0 GB
+   */
+  readonly heart: HeartBreak;
 
   /**
    * Namespace for grafting functions.
@@ -6910,7 +6922,7 @@ export interface NS {
 }
 
 /** @public */
-declare const enums = {
+declare const enums: {
   toast: {
     SUCCESS: "success",
     WARNING: "warning",

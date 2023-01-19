@@ -23,7 +23,7 @@ export function init(_ns, stats)
     hackSlave.ram = ns.getScriptRam(hackSlave.hostname)
 }
 
-/** @type {(s: Server, svList: Server[]) => void} */
+/** @type {(s: Server, svList: Server[]) => number} */
 export function slave(host, svList)
 {
     const rootedServers = svList.filter(s => s.hostname != 'home')
@@ -32,7 +32,7 @@ export function slave(host, svList)
 
     const weightedServers = !weighted ? moneyServers.map(e => ({ e, w: 1 })) :
         closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
-    mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n))
+    return mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n))
 }
 
 /** @type {(host: Server, ws: {e:Server, w:number}[], t: number, n: number) => number} */
@@ -57,7 +57,7 @@ function enslave(host, ws, threads, n)
     const fSec = ` ${t.hackDifficulty|0}/${secThresh|0}/${t.minDifficulty|0} `;
     const xargs = [fMoney, fSec].join(", ")
 
-    const pid = ns.exec(`s_${action}.js`, host.hostname, threads, t.hostname, threads, '--', xargs, n)
+    const pid = ns.exec(`s_${action}.js`, host.hostname, threads, t.hostname, threads, '--', xargs, n);
     _stats.active[t.hostname][action].push(pid);
     _stats.all[action].push(pid);
     return pid;
@@ -66,7 +66,7 @@ function enslave(host, ws, threads, n)
 /** @param {Server} s */
 const getAvail = s => (s.maxRam / (s.hostname == 'home' ? 1.2 : 1) - ns.getServerUsedRam(s.hostname));
 
-/** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => void} */
+/** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => number} */
 function mine(s, ram, exec)
 {
     var threads = Math.floor(getAvail(s) / ram);
@@ -74,16 +74,18 @@ function mine(s, ram, exec)
     if (threads <= 0) return;
 
     var n = threads / buf | 0;
+    var errs = 0;
     // ns.tprint(`starting ${n}buf + ${threads - n * buf} on ${s.hostname} [${threads}]`);
 
     const execerr = (x = 0) =>
-        utilx.err(`exec ${x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
+        utilx.err(`exec ${errs++, x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
 
     if (!n)
         exec(threads, 0) || execerr(2)
     else while (n--)
     {
-        exec(buf, 1 + Math.random() * 9998 | 0) || execerr(1)
         threads -= buf;
+        exec(buf, 1 + Math.random() * 9998 | 0) || execerr(1)
     }
+    return errs;
 }

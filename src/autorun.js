@@ -13,7 +13,7 @@ import { SProcStats } from "./classes";
 
 /** @type {Partial<BBServerData>} */
 let data = {};
-
+let errsPerSec = 0;
 
 /** @type {SStats} */
 const stats = { idle: 0, all: new SProcStats(), active: {} }
@@ -28,15 +28,49 @@ export async function main(_ns)
     // flush port
     while (ns.readPort(1) != "NULL PORT DATA");
 
+    if (ns.args.includes('-p')) ns.exec('purchase.js', 'home', 1, '-d');
+    const autoTor = autoScript(ns, 'tor', (/** @type {Player} */ p) => p.money > 5e6 && !ns.fileExists('SQLInject.exe'));
+    const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
+    const autoClear = autoScript(ns, 'clear', () => true);
+
     for (var i = 0; ; i++)
     {
         if (i % 2 == 0) while (handleMsg(String(ns.readPort(1))));
         if (i % 20 == 0) await checkNewServers();
         if (i % 2 == 0) await enslaveServers();
-        if (i % 10 == 0) printStats();
+
+        if (errsPerSec > 0 && --errsPerSec > 10)
+            errsPerSec = i % 10 / 2 | 0, autoClear();
+
+        if (i % 10 == 0)
+        {
+            const p = ns.getPlayer();
+            printStats();
+            errsPerSec -= 10;
+
+            autoTor(p);
+            autoGang();
+        }
+
 
         buy_upgrade(ns);
         await ns.sleep(1000);
+    }
+}
+
+/** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => void)} */
+function autoScript(ns, name, cond)
+{
+    var pid = 0;
+    return (...a) =>
+    {
+        if (!ns.isRunning(pid, 'home')) pid = 0;
+        if (!pid && cond(...a))
+        {
+            pid = ns.exec(name + `.js`, 'home', 1);
+            if (pid) ns.tprint(`auto ${name}`)
+            else ns.tprint(`auto ${name} failed`);
+        }
     }
 }
 
@@ -74,9 +108,9 @@ async function enslaveServers()
     for (const s of svList)
     {
         try { srvd.addServer(s.hostname); }
-        catch(e) { continue; }
+        catch (e) { continue; }
         if (s.maxRam - s.ramUsed < enslave.hackSlave.ram) continue
-        enslave.slave(s, svList);
+        errsPerSec += enslave.slave(s, svList);
         await ns.sleep(10);
     }
 }
