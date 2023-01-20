@@ -83,7 +83,7 @@ var ethical = "";
 export async function main(ns)
 {
 	if (!ns.gang.inGang()) return;
-	
+
 	const memberNames = ns.gang.getMemberNames();
 	for (const name of memberNames)
 		tasks[name] = ns.gang.getMemberInformation(name).task;
@@ -93,7 +93,8 @@ export async function main(ns)
 		const player = ns.getPlayer();
 		const members = memberNames.map(name => ns.gang.getMemberInformation(name))
 			.sort((a, b) => b.hack_exp - a.hack_exp)
-		var wantedLevel = 0;
+
+		var wantedLevel = members.reduce((s, m) => s + m.wantedLevelGain, 0);
 		const hackMean = mean(members.map(m => m.hack));
 
 		for (const m of members)
@@ -105,7 +106,7 @@ export async function main(ns)
 			if (res.hack > req)
 			{
 				ns.gang.ascendMember(m.name);
-				ns.tprint(`ascended ${m.name} * ${fn(res.hack)} = ${fn(m.hack_asc_mult)}`);
+				ns.tprint(`INFO ascended ${m.name} * ${fn(res.hack)} = ${fn(m.hack_asc_mult)}`);
 				Object.assign(m, ns.gang.getMemberInformation(m.name));
 			}
 
@@ -124,7 +125,7 @@ export async function main(ns)
 				if (cost * 50 < player.money)
 				{
 					// ns.tprint(`purchasing ${e} ${fn2(cost)} for ${m.name}`);
-					ns.gang.purchaseEquipment(m.name, e) || ns.tprint("error buying");
+					ns.gang.purchaseEquipment(m.name, e) || ns.tprint("ERROR buying equipment");
 					player.money -= cost;
 				}
 			}
@@ -169,8 +170,8 @@ export async function main(ns)
 		while (ns.gang.canRecruitMember())
 		{
 			const name = selectRandom(names)[memberNames.length];
-			ns.tprint("recruiting " + name)
-			ns.gang.recruitMember(name) || ns.tprint("error recruiting " + name);
+			ns.tprint("INFO recruiting " + name)
+			ns.gang.recruitMember(name) || ns.tprint("ERROR recruiting " + name);
 			memberNames.push(name);
 			ns.gang.setMemberTask(name, "Train Hacking");
 		}
@@ -187,7 +188,7 @@ function setMemberTask(ns, name, task = null)
 	else if (tasks[name] != task) tasks[name] = task;
 
 	// ns.tprint(`task ${name}: ${task}.`);
-	return ns.gang.setMemberTask(name, task) || ns.tprint("task failed") || false;
+	return ns.gang.setMemberTask(name, task) || ns.tprint("ERROR task failed") || false;
 }
 
 // Credit: Mysteyes. https://discord.com/channels/415207508303544321/415207923506216971/940379724214075442

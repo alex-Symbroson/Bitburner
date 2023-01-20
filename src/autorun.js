@@ -21,6 +21,12 @@ const stats = { idle: 0, all: new SProcStats(), active: {} }
 /** @param {NS} _ns */
 export async function main(_ns)
 {
+    ns = _ns;
+    for (const fn of 'disableLog,scan,scp,asleep,sleep,exec,getServerUsedRam,getHackingLevel,nuke,brutessh,ftpcrack,relaysmtp,sqlinject,httpworm'.split(',')) ns.disableLog(fn);
+
+    ns.atExit(() => ns.closeTail());
+    ns.tail();
+
     data = srvd.init(ns = _ns);
     enslave.init(ns = _ns, stats);
     hack.init(ns = _ns);
@@ -54,22 +60,22 @@ export async function main(_ns)
 
 
         buy_upgrade(ns);
-        await ns.sleep(1000);
+        await ns.asleep(1000);
     }
 }
 
 /** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => void)} */
 function autoScript(ns, name, cond)
 {
-    var pid = 0;
+    var pid = ns.ps().find(s => s.filename == name + '.js')?.pid || 0;
     return (...a) =>
     {
         if (!ns.isRunning(pid, 'home')) pid = 0;
         if (!pid && cond(...a))
         {
-            pid = ns.exec(name + `.js`, 'home', 1);
-            if (pid) ns.tprint(`auto ${name}`)
-            else ns.tprint(`auto ${name} failed`);
+            pid = ns.exec(name + '.js', 'home', 1);
+            if (pid) ns.tprint(`WARN auto ${name}`)
+            else ns.tprint(`ERROR auto ${name} failed`);
         }
     }
 }
@@ -147,7 +153,7 @@ function printStats()
     }
 
     if (JSON.stringify(stats.all) != lastStats)
-        ns.tprint(
+        ns.print(
             `${stats.all.weaken.length} [${max.weaken}] weakening, ` +
             `${stats.all.grow.length} [${max.grow}] growing, ` +
             `${stats.all.hack.length} [${max.hack}] hacking, ` +

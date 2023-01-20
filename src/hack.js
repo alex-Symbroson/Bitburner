@@ -34,7 +34,7 @@ export function checkServer(ns, s)
 /** @type {(ns:NS, path: string[]) => void} */
 function backdoor(ns, path)
 {
-	try { var pid = ns.exec("backdoor.js", "home", 1, ...path); ns.tprint(`  backdooring ${path[path.length-1]} : ${pid}`); }
+	try { var pid = ns.exec("backdoor.js", "home", 1, ...path); ns.tprint(`INFO backdooring ${path[path.length-1]} : ${pid}`); }
 	catch(e) { if (path.length < 4 || ns.args.includes("-a")) ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`); }
 }
 

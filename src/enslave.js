@@ -78,7 +78,7 @@ function mine(s, ram, exec)
     // ns.tprint(`starting ${n}buf + ${threads - n * buf} on ${s.hostname} [${threads}]`);
 
     const execerr = (x = 0) =>
-        utilx.err(`exec ${errs++, x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
+        ns.tprint(`ERROR exec ${errs++, x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
 
     if (!n)
         exec(threads, 0) || execerr(2)

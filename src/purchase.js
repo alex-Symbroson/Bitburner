@@ -9,14 +9,15 @@ let data = {};
 export async function main(ns)
 {
     data = srvd.init(ns);
-    if (ns.args[0] == "-i") ns.tprint(ns.getPurchasedServerCost(Number(ns.args[0])).toExponential(2))
-    else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]))
-    else if (ns.args[0] == "-d") await daemon(ns)
+    if (ns.args[0] == "-i") ns.tprint(ns.getPurchasedServerCost(Number(ns.args[0])).toExponential(2));
+    else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]));
+    else if (ns.args[0] == "-k") ns.kill('purchase.js', 'home', '-d') && ns.tprint('SUCCESS killed purchase.js');
+    else if (ns.args[0] == "-d") await daemon(ns);
     else {
         const servers = ns.getPurchasedServers()
             .map(s => data.servers[s])
             .sort((a, b) => a.maxRam - b.maxRam);
-        printCount(ns, servers)
+        printCount(ns, servers);
     }
 }
 
@@ -60,7 +61,7 @@ async function daemon(ns)
         {
             if (servers[0].maxRam >= 1 << ramLvl)
             {
-                ns.tprint(`ram bump ${fn2(ramLvl)} -> ${fn2(ramLvl + 1)}`);
+                ns.tprint(`WARN ram bump ${fn2(ramLvl)} -> ${fn2(ramLvl + 1)}`);
                 ramLvl++;
             }
             else
@@ -84,7 +85,7 @@ async function daemon(ns)
             printCount(ns, servers);
         }
     }
-    ns.tprint("WARNING: maxed on servers, terminated");
+    ns.tprint("WARN maxed on servers, terminated");
 }
 
 /**
