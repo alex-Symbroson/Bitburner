@@ -31,20 +31,33 @@ export function checkServer(ns, s)
 	}
 }
 
+const bdoors = /** @type {{[name:string]:bool}} */ {};
 /** @type {(ns:NS, path: string[]) => void} */
 function backdoor(ns, path)
 {
-	try { var pid = ns.exec("backdoor.js", "home", 1, ...path); ns.tprint(`INFO backdooring ${path[path.length-1]} : ${pid}`); }
-	catch(e) { if (path.length < 4 || ns.args.includes("-a")) ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`); }
+	try
+	{
+		const name = path[path.length-1];
+		if (bdoors[name]) return;
+		var pid = ns.exec("backdoor.js", "home", 1, ...path);
+		if (!pid) return ns.tprint(`ERROR backdooring ${name} failed`);
+		bdoors[name] = true;
+		ns.tprint(`INFO backdooring ${name} : ${pid}`);
+	}
+	catch(e)
+	{
+		if (path.length < 4 || ns.args.includes("-a"))
+			ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`);
+	}
 }
 
 /** @type {(ns:NS, s:string) => void} */
 export function crack(ns, s)
 {
-	const crackNo = srvd.updateBasic().crackNo;
-	if (crackNo > 0) ns.brutessh(s);
-	if (crackNo > 1) ns.ftpcrack(s);
-	if (crackNo > 2) ns.relaysmtp(s);
-	if (crackNo > 3) ns.httpworm(s);
-	if (crackNo > 4) ns.sqlinject(s);
+	['brutessh.exe', 'ftpcrack.exe', 'relaysmtp.exe', 'httpworm.exe', 'sqlinject.exe']
+	if (ns.fileExists('brutessh.exe')) ns.brutessh(s);
+	if (ns.fileExists('ftpcrack.exe')) ns.ftpcrack(s);
+	if (ns.fileExists('relaysmtp.exe')) ns.relaysmtp(s);
+	if (ns.fileExists('httpworm.exe')) ns.httpworm(s);
+	if (ns.fileExists('sqlinject.exe')) ns.sqlinject(s);
 }

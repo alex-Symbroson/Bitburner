@@ -11,7 +11,7 @@ export async function main(ns)
     data = srvd.init(ns);
     if (ns.args[0] == "-i") ns.tprint(ns.getPurchasedServerCost(Number(ns.args[0])).toExponential(2));
     else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]));
-    else if (ns.args[0] == "-k") ns.kill('purchase.js', 'home', '-d') && ns.tprint('SUCCESS killed purchase.js');
+    else if (ns.args[0] == "-k") ns.kill('purchase.js', 'home', '-d') && ns.tprint('killed purchase.js');
     else if (ns.args[0] == "-d") await daemon(ns);
     else {
         const servers = ns.getPurchasedServers()
@@ -32,6 +32,11 @@ async function daemon(ns)
         .map(s => data.servers[s])
         .sort((a, b) => a.maxRam - b.maxRam);
     
+    const ramBump = () => {
+        ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl)} -> ${getRamStr(ns, 1 << ramLvl + 1)}`);
+        ramLvl++;
+    }
+    
     // update ramLvl to greatest purchased server
     if (servers.length > 0)
     {
@@ -39,41 +44,35 @@ async function daemon(ns)
         ramLvl = logn(Math.max.apply(null, rams), 2)
     }
 
-    // skip ram level when money is significantly greater
-    const money = ns.getPlayer().money;
-    while (ns.getPurchasedServerCost(1 << ramLvl) < money / 4) ramLvl++;
-
     // general info
     ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`)
     printCount(ns, servers)
+
     // flush port
     while (ns.readPort(2) != "NULL PORT DATA");
 
     while (ramLvl <= maxRam)
     {
+        // skip ram level when money is significantly greater
         const p = ns.getPlayer();
+        while (ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump();
+
         const ram = Math.min(1 << 20, 1 << ramLvl);
         const cost = ns.getPurchasedServerCost(ram);
 
-        await ns.asleep(1000);
-        if (p.money < cost) await ns.asleep(5000);
-        else if (servers.length >= data.srvLimit)
+        if (p.money < cost) await ns.asleep(1e4);
+        else if (servers.length == data.srvLimit)
         {
-            if (servers[0].maxRam >= 1 << ramLvl)
-            {
-                ns.tprint(`WARN ram bump ${fn2(ramLvl)} -> ${fn2(ramLvl + 1)}`);
-                ramLvl++;
-            }
-            else
-            {
-                ns.writePort(1, `sd ${servers[0].hostname}`);
-                while (ns.readPort(2) != "registered") await ns.sleep(1000);
+            ns.writePort(1, `sd ${servers[0].hostname}`);
+            while (ns.readPort(2) != "registered") await ns.sleep(1000);
 
-                ns.killall(servers[0].hostname);
-                ns.deleteServer(servers[0].hostname);
-                servers.shift();
-                printCount(ns, servers);
-            }
+            ns.killall(servers[0].hostname);
+            ns.deleteServer(servers[0].hostname);
+
+            const sum = servers.map(s => s.maxRam).reduce((a,b) => a + b, 0);
+            const gainRat = (sum - servers[0].maxRam + ram) / sum - 1;
+            ns.tprint(`expected gain: ${100*gainRat|0}%`);
+            servers.shift();
         }
         else
         {
@@ -82,18 +81,25 @@ async function daemon(ns)
             const s = ns.getServer(sname);
             ns.writePort(1, `sa ${s.hostname}`);
             servers.push(s);
-            printCount(ns, servers);
+            printCount(ns, servers, ' + ' + s.hostname);
+
+            if (ramLvl < maxRam && servers[data.srvLimit*0.6|0].maxRam >= 1 << ramLvl) ramBump();
         }
     }
+
     ns.tprint("WARN maxed on servers, terminated");
 }
 
-/**
- * @type {(ns:NS, list:Server[]) => void}
- */
-function printCount(ns, servers)
+/** @type {(ns:NS, list:Server[], newserv?:string) => void} */
+function printCount(ns, servers, newserv = '')
 {
     const counts = /** @type {{[x:string]: number}} */ ({});
     servers.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
-    ns.tprint(Object.keys(counts).map(k => `${counts[k]} ${fn2(Number(k))} [${fn2(ns.getPurchasedServerCost(Number(k)))}]`).join(", "))
+    ns.tprint(`INFO ${servers.length}/${data.srvLimit}: ` + Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ") + newserv)
+}
+
+/** @type {(ns:NS, n:number) => string} */
+function getRamStr(ns, n)
+{
+    return `${Math.log2(n)}:${fn2(n)} [${fn2(ns.getPurchasedServerCost(n))}]`;
 }

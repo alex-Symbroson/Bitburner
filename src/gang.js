@@ -11,8 +11,8 @@ const names = [
 
 const trainings = ["Train Combat", "Train Hacking", "Train Charisma"];
 //const crimes = "Unassigned,Ransomware,Phishing,Identity Theft,DDoS Attacks,Plant Virus,Fraud & Counterfeiting,Money Laundering,Cyberterrorism".split(",")
-const crimes = "Phishing,Identity Theft,Money Laundering,Cyberterrorism".split(",")
-const niceThings = ["Ethical Hacking"]
+const crimes = "Phishing,Identity Theft,Human Trafficking,Money Laundering,Cyberterrorism".split(",")
+const niceThings = ["Vigilante Justice", "Ethical Hacking"]
 const equipment = {
 	Weapon: ["Baseball Bat", "Katana", "Glock 18C", "P90C", "Steyr AUG", "AK-47", "M15A10 Assault Rifle", "AWM Sniper Rifle"],
 	Armor: ["Bulletproof Vest", "Full Body Armor", "Liquid Body Armor", "Graphene Plating Armor"],
@@ -113,7 +113,7 @@ export async function main(ns)
 			// ns.tprint(m.name + (m.name == ethical ? "*" : "") + ": " + (m.hack >= hackMean) + " " + fn2(m.hack) + "/" + fn2(hackMean) + " " + m.task);
 			if (m.hack > 1e3 && m.hack >= hackMean)
 			{
-				if (m.name != ethical) setMemberTask(ns, m.name, "Money Laundering");
+				if (m.name != ethical) setMemberTask(ns, m.name, crimes[2]);
 			}
 			else
 				setMemberTask(ns, m.name, "Train Hacking");
@@ -162,8 +162,8 @@ export async function main(ns)
 
 		if (!ethical)
 		{
-			const newEthic = selectRandom(memberNames.filter(n => tasks[n] == "Money Laundering"));
-			if (newEthic && setMemberTask(ns, newEthic, "Ethical Hacking"))
+			const newEthic = selectRandom(memberNames.filter(n => crimes.includes(tasks[n])));
+			if (newEthic && setMemberTask(ns, newEthic, niceThings[0]))
 				ethical = newEthic;
 		}
 

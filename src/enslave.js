@@ -1,4 +1,3 @@
-
 import { closeWeights, fn, fn2, selectWeighted } from "./util";
 import * as utilx from "./utilx";
 
@@ -30,9 +29,11 @@ export function slave(host, svList)
     const moneyServers = rootedServers.filter(s => s.moneyMax)
     if (!moneyServers.length) return;
 
+    var errs = 0;
     const weightedServers = !weighted ? moneyServers.map(e => ({ e, w: 1 })) :
         closeWeights(moneyServers, s => s.maxRam, host.maxRam, 5)
-    return mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n))
+    mine(host, hackSlave.ram, (t, n) => enslave(host, weightedServers, t, n) || (errs++, 0));
+    return errs;
 }
 
 /** @type {(host: Server, ws: {e:Server, w:number}[], t: number, n: number) => number} */
@@ -64,9 +65,9 @@ function enslave(host, ws, threads, n)
 }
 
 /** @param {Server} s */
-const getAvail = s => (s.maxRam / (s.hostname == 'home' ? 1.2 : 1) - ns.getServerUsedRam(s.hostname));
+const getAvail = s => (s.maxRam * (s.hostname == 'home' ? 0.8 : 1) - ns.getServerUsedRam(s.hostname));
 
-/** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => number} */
+/** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => void} */
 function mine(s, ram, exec)
 {
     var threads = Math.floor(getAvail(s) / ram);
@@ -74,18 +75,16 @@ function mine(s, ram, exec)
     if (threads <= 0) return;
 
     var n = threads / buf | 0;
-    var errs = 0;
     // ns.tprint(`starting ${n}buf + ${threads - n * buf} on ${s.hostname} [${threads}]`);
 
     const execerr = (x = 0) =>
-        ns.tprint(`ERROR exec ${errs++, x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
+        ns.tprint(`ERROR exec ${x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
 
     if (!n)
-        exec(threads, 0) || execerr(2)
+        exec(threads, 0) || execerr(2);
     else while (n--)
     {
         threads -= buf;
-        exec(buf, 1 + Math.random() * 9998 | 0) || execerr(1)
+        if (!exec(buf, 1 + Math.random() * 9998 | 0)) { execerr(1); break; }
     }
-    return errs;
 }

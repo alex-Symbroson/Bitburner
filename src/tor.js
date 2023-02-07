@@ -15,7 +15,6 @@ export async function main(ns)
 		"Formulas.exe"];
 	
 	const actions = [
-		() => ns.singularity.travelToCity("Aevum"),
 		() => ns.singularity.purchaseTor(),
 		...items.map(p => (() => ns.singularity.purchaseProgram(p)))
 	];

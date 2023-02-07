@@ -5,7 +5,7 @@ import * as srvd from "./serverData";
 import * as enslave from "./enslave";
 import * as hack from "./hack";
 import { copy } from "./clear";
-import { buy_upgrade } from "./nodehack";
+// import { buy_upgrade } from "./nodehack";
 import { BBServerData } from "./servers";
 import { SProcStats } from "./classes";
 
@@ -58,8 +58,7 @@ export async function main(_ns)
             autoGang();
         }
 
-
-        buy_upgrade(ns);
+        // buy_upgrade(ns);
         await ns.asleep(1000);
     }
 }

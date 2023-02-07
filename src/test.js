@@ -42,7 +42,7 @@ function status()
 		if (filter && !status.startsWith(filter)) continue;
 
 		const moneyFmt = d.moneyMax.toExponential(2)
-		const path = d.hasAdminRights || d.backdoorInstalled ? "" : srvd.scanServerPath(d.hostname).join("/")
+		const path = d.hasAdminRights || d.backdoorInstalled ? "" : srvd.scanServerPath(d.hostname).join("/").slice(0, 64)
 		ns.tprint(
 			`  ${moneyFmt}$\t${status}${status == "root" && !d.backdoorInstalled ? '*' : ' '}\t` +
 			`${d.numOpenPortsRequired}:${d.requiredHackingSkill}\t${path || d.hostname}`)
