@@ -80,7 +80,7 @@ function mine(s, ram, exec)
     const execerr = (x = 0) =>
         ns.tprint(`ERROR exec ${x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
 
-    if (!n)
+    if (!n && buf < 50)
         exec(threads, 0) || execerr(2);
     else while (n--)
     {

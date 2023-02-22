@@ -12,7 +12,7 @@ export async function main(ns)
 }
 
 /** @type {(ns:NS, cost:number) => boolean} ns */
-const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 30
+const can_purchase = (ns, cost) => cost < ns.getPlayer().money / 100
 
 /** @param {NS} ns */
 export function buy_upgrade(ns)

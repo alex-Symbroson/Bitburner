@@ -73,7 +73,7 @@ async function daemon(ns)
 
             const sum = servers.map(s => s.maxRam).reduce((a,b) => a + b, 0);
             const gainRat = (sum - servers[0].maxRam + ram) / sum - 1;
-            ns.tprint(`purchase dt ${fn(Date.now()-lastPurchase, -3, 0)}s gain: ${fn(gainRat, 2, 1)}%`);
+            // ns.tprint(`purchase dt ${fn(Date.now()-lastPurchase, -3, 0)}s gain: ${fn(gainRat, 2, 1)}%`);
             lastPurchase = Date.now();
             servers.shift();
         }

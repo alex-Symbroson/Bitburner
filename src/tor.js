@@ -1,6 +1,6 @@
 /// <reference path="../types.js"/>
 
-/** @param {import("../Bitburner.t").NS} ns */
+/** @param {NS} ns */
 export async function main(ns)
 {
 	const items = ["BruteSSH.exe",
@@ -12,7 +12,8 @@ export async function main(ns)
 		"DeepscanV1.exe",
 		"DeepscanV2.exe",
 		"AutoLink.exe",
-		"Formulas.exe"];
+		//"Formulas.exe"
+		];
 	
 	const actions = [
 		() => ns.singularity.purchaseTor(),
@@ -21,9 +22,11 @@ export async function main(ns)
 
 	while (actions.length)
 	{
-		await ns.sleep(1);
-		if (!actions[0]()) continue;
-		ns.tprint(actions[0] + '');
-		actions.shift();
+		if (actions[0]())
+		{	
+			ns.tprint(actions[0] + '');
+			actions.shift();
+		}
+		else await ns.sleep(1000);
 	}
 }

@@ -5,7 +5,6 @@ import * as srvd from "./serverData";
 import * as enslave from "./enslave";
 import * as hack from "./hack";
 import { copy } from "./clear";
-// import { buy_upgrade } from "./nodehack";
 import { BBServerData } from "./servers";
 import { SProcStats } from "./classes";
 
@@ -27,6 +26,8 @@ export async function main(_ns)
     ns.atExit(() => ns.closeTail());
     ns.tail();
 
+    /** @type {Player} */
+    let p;
     data = srvd.init(ns = _ns);
     enslave.init(ns = _ns, stats);
     hack.init(ns = _ns);
@@ -34,10 +35,12 @@ export async function main(_ns)
     // flush port
     while (ns.readPort(1) != "NULL PORT DATA");
 
-    if (ns.args.includes('-p')) ns.exec('purchase.js', 'home', 1, '-d');
-    const autoTor = autoScript(ns, 'tor', (/** @type {Player} */ p) => p.money > 5e6 && !ns.fileExists('SQLInject.exe'));
-    const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
+    if (!ns.args.includes('-np')) ns.exec('purchase.js', 'home', 1, '-d');
+    const autoTor = autoScript(ns, 'tor', () => p.money > 5e6 && !ns.fileExists('SQLInject.exe'));
+    const autoGang = autoScript(ns, 'gang', () => true || ns.heart.break() < -54e3);
     const autoClear = autoScript(ns, 'clear', () => true);
+    const autoHome = autoScript(ns, 'home', () => p.money > 5e6);
+    const autoWork = autoScript(ns, 'work', () => p.money > 5e6);
 
     for (var i = 0; ; i++)
     {
@@ -50,15 +53,16 @@ export async function main(_ns)
 
         if (i % 10 == 0)
         {
-            const p = ns.getPlayer();
+            p = ns.getPlayer();
             printStats();
             errsPerSec -= 10;
 
-            autoTor(p);
+            autoTor();
             autoGang();
+            autoHome();
+            autoWork();
         }
 
-        // buy_upgrade(ns);
         await ns.asleep(1000);
     }
 }

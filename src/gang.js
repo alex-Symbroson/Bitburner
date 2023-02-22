@@ -106,12 +106,12 @@ export async function main(ns)
 			if (res.hack > req)
 			{
 				ns.gang.ascendMember(m.name);
-				ns.tprint(`INFO ascended ${m.name} * ${fn(res.hack)} = ${fn(m.hack_asc_mult)}`);
+				// ns.tprint(`INFO ascended ${m.name} * ${fn(res.hack)} = ${fn(m.hack_asc_mult)}`);
 				Object.assign(m, ns.gang.getMemberInformation(m.name));
 			}
 
 			// ns.tprint(m.name + (m.name == ethical ? "*" : "") + ": " + (m.hack >= hackMean) + " " + fn2(m.hack) + "/" + fn2(hackMean) + " " + m.task);
-			if (m.hack > 1e3 && m.hack >= hackMean)
+			if (m.hack > 1e3 && m.hack >= hackMean || m.hack >= 80e3)
 			{
 				if (m.name != ethical) setMemberTask(ns, m.name, crimes[2]);
 			}
