@@ -1,9 +1,10 @@
 import * as srvd from "./serverData";
 import { BBServerData } from "./servers";
-import { fn2, logn } from "./util";
+import { fn, fn2, logn } from "./util";
 
 /** @type {Partial<BBServerData>} */
 let data = {};
+let lastPurchase = Date.now();
 
 /** @param {NS} ns */
 export async function main(ns)
@@ -41,7 +42,7 @@ async function daemon(ns)
     if (servers.length > 0)
     {
         const rams = servers.map(s => s.maxRam);
-        ramLvl = logn(Math.max.apply(null, rams), 2)
+        ramLvl = logn(Math.max.apply(null, rams), 2);
     }
 
     // general info
@@ -51,11 +52,11 @@ async function daemon(ns)
     // flush port
     while (ns.readPort(2) != "NULL PORT DATA");
 
-    while (ramLvl <= maxRam)
+    while (servers.length < 25 || servers[0].maxRam < 1 << maxRam)
     {
         // skip ram level when money is significantly greater
         const p = ns.getPlayer();
-        while (ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump();
+        while (ramLvl < maxRam && ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump();
 
         const ram = Math.min(1 << 20, 1 << ramLvl);
         const cost = ns.getPurchasedServerCost(ram);
@@ -63,6 +64,7 @@ async function daemon(ns)
         if (p.money < cost) await ns.asleep(1e4);
         else if (servers.length == data.srvLimit)
         {
+            // if (ramLvl >= maxRam) break;
             ns.writePort(1, `sd ${servers[0].hostname}`);
             while (ns.readPort(2) != "registered") await ns.sleep(1000);
 
@@ -71,7 +73,8 @@ async function daemon(ns)
 
             const sum = servers.map(s => s.maxRam).reduce((a,b) => a + b, 0);
             const gainRat = (sum - servers[0].maxRam + ram) / sum - 1;
-            ns.tprint(`expected gain: ${100*gainRat|0}%`);
+            ns.tprint(`purchase dt ${fn(Date.now()-lastPurchase, -3, 0)}s gain: ${fn(gainRat, 2, 1)}%`);
+            lastPurchase = Date.now();
             servers.shift();
         }
         else
@@ -83,7 +86,7 @@ async function daemon(ns)
             servers.push(s);
             printCount(ns, servers, ' + ' + s.hostname);
 
-            if (ramLvl < maxRam && servers[data.srvLimit*0.6|0].maxRam >= 1 << ramLvl) ramBump();
+            if (ramLvl < maxRam && servers[data.srvLimit*0.6|0]?.maxRam >= 1 << ramLvl) ramBump();
         }
     }
 
