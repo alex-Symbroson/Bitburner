@@ -9,7 +9,8 @@ export async function main(ns)
     // remove effect from already purchased, but uninstalled, augmentations
     var nfgPrice = ns.singularity.getAugmentationPrice(NFG);
     var nofUninstAugs = nofUninstalledAugs(ns);
-    if (nofUninstAugs > 0) {
+    if (nofUninstAugs > 0)
+    {
         // source-file no. 11 changes the modifyer, we account for that here
         let priceMod = Math.pow(AUG_QUEUE_MULT * SOURCE_F_11_MOD[getSourceFileLevel(ns, 11)], nofUninstAugs);
         nfgPrice = nfgPrice / priceMod;
@@ -19,23 +20,27 @@ export async function main(ns)
     if (getSourceFileLevel(ns, 5) > 0 || ns.getPlayer().bitNodeN == 5)
         // remove bitnode-multiplier (this requires source-file no. 5)
         multiplier = multiplier / ns.getBitNodeMultipliers().AugmentationMoneyCost;
-    
+
     // calculate the level from the multiplier
     var level = log(multiplier, MULT_BASE);
-	ns.tprint(level);
+    ns.tprint(level);
 }
 
-/** @param {NS} ns */
-function getSourceFileLevel(ns, n) {
+/** @type {(ns:NS, n:number) => number} */
+function getSourceFileLevel(ns, n)
+{
     const res = ns.singularity.getOwnedSourceFiles().find(f => f.n == n);
     return res ? res.lvl : 0;
 }
 
 /** @param {NS} ns */
-function nofUninstalledAugs(ns) {
+function nofUninstalledAugs(ns)
+{
     return ns.singularity.getOwnedAugmentations(true).length - ns.singularity.getOwnedAugmentations(false).length
 }
 
-function log(x, b) {
+/** @type {(x:number, b:number) => number} */
+function log(x, b)
+{
     return Math.log(x) / Math.log(b)
 }

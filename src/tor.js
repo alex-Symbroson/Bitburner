@@ -13,8 +13,8 @@ export async function main(ns)
 		"DeepscanV2.exe",
 		"AutoLink.exe",
 		//"Formulas.exe"
-		];
-	
+	];
+
 	const actions = [
 		() => ns.singularity.purchaseTor(),
 		...items.map(p => (() => ns.singularity.purchaseProgram(p)))
@@ -23,7 +23,7 @@ export async function main(ns)
 	while (actions.length)
 	{
 		if (actions[0]())
-		{	
+		{
 			ns.tprint(actions[0] + '');
 			actions.shift();
 		}
