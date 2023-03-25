@@ -1,12 +1,11 @@
-
 const fn = (i = 0, f = 0, d = 3) => (i * 10 ** (f + d) | 0) / 10 ** (d);
 
 const logn = (x = 0, b = 10) => Math.log2(x) / Math.log2(b);
 
 function fn2(x = 0, d = 0)
 {
-    const e = logn(x) / 3 | 0;
-    return (fn(x, -3*e, d) + " kmbtqQsS"[e]).trimEnd();
+	const e = logn(x) / 3 | 0;
+	return (fn(x, -3 * e, d) + " kmbtqQsS"[e]).trimEnd();
 }
 /** @type {<T>(list: T[]) => T} */
 export const selectRandom = list => list[Math.random() * list.length | 0];
@@ -36,4 +35,20 @@ const sum = arr => arr.reduce((a, b) => a + b, 0);
 /** @type {(arr: number[]) => number} */
 const mean = arr => sum(arr) / arr.length;
 
-export { fn, sum, mean, logn, fn2 }
+class Timer
+{
+	last = 0;
+	diff = 0;
+
+	constructor() { this.last = Date.now(); }
+	toString = () => fn(this.diff, -3, 0);
+
+	next()
+	{
+		this.diff = Date.now() - this.last;
+		this.last += this.diff;
+		return this;
+	}
+}
+
+export { fn, sum, mean, logn, fn2, Timer }

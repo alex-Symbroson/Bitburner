@@ -9,5 +9,7 @@ export async function main(ns)
 
 		for (const f of ns.singularity.checkFactionInvitations())
 			ns.singularity.joinFaction(f);
+
+		ns.gang.createGang("Slum Snakes");
 	}
 }

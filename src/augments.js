@@ -1,12 +1,25 @@
 import { fn, fn2 } from './util'
 
-/** @typedef {{name:string,faction:string,price:number}} Aug */
+/** @typedef {{name:string,faction:string,stats:string[],price:number}} Aug */
 
 const AUG_MULT = 1.9, NFG_MULT = 1.14, NFG = "NeuroFlux Governor";
 
 /** @param {NS} ns */
 export async function main(ns)
 {
+    check(ns);
+
+    while (ns.args.includes('-d'))
+    {
+        ns.asleep(10000);
+        check(ns, true);
+    }
+}
+
+/** @type {(ns:NS, auto?:boolean) => void} */
+function check(ns, auto = false)
+{
+    const allow = [NFG, "Neuroreceptor Management Implant", "The Red Pill"]
     const p = ns.getPlayer();
 	const fs = p.factions
 		.map(name => ({name, rep:ns.singularity.getFactionRep(name)}))
@@ -21,7 +34,7 @@ export async function main(ns)
 	{
 		for (const a of ns.singularity.getAugmentationsFromFaction(f.name))
 		{
-            if (augs[a] || a != NFG && installed.includes(a) || ns.singularity.getAugmentationRepReq(a) > f.rep) continue;
+            if (a != NFG && installed.includes(a) || ns.singularity.getAugmentationRepReq(a) > f.rep) continue;
 
 			const s = ns.singularity.getAugmentationStats(a);
 			/** @type {(keyof s)[]} */
@@ -29,9 +42,10 @@ export async function main(ns)
                 "faction_rep", 
                 "hacking", "hacking_exp", "hacking_grow", "hacking_money", "hacking_speed"
             ];
-			if (ss.findIndex(k => s[k] > 1) == -1) continue;
+			if (!allow.includes(a) && ss.findIndex(k => s[k] != 1) == -1) continue;
 			augs[a] = {
 				name: a, faction: f.name,
+                stats: ss.filter(k => s[k] != 1).map(k => k.split('_').map(k => k[0]).join('')),
 				price: ns.singularity.getAugmentationBasePrice(a) * AUG_MULT ** exp};
 		}
 	}
@@ -40,7 +54,8 @@ export async function main(ns)
 
 	const lstAugs = Object.values(augs).sort((a, b) => a.price - b.price);
     
-    const ai = lstAugs.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
+    let ai = lstAugs.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
+    if (ai == -1) ai = lstAugs.length == 0 ? 0 : (costSum(lstAugs) > p.money ? 0 : lstAugs.length);
 
     const nfgPrice = ns.singularity.getAugmentationPrice(NFG);
     /** @type {Aug[]} */
@@ -50,8 +65,8 @@ export async function main(ns)
     
     if (ns.args.includes('-i'))
     {
-        ns.tprint(lstAugs.slice(0, ai + 10).map(a => `\n${fn2(a.price)}: ${a.name} (${a.faction})`).join(''));
-        ns.tprint(lstNfg.slice(0, ni + 10).map(a => `\n${fn2(a.price)}: ${a.name} (${a.faction})`).join(''));
+        ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
+        ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
     }
     const ags = [0,1].map(n => fn2(costSum(lstAugs.slice(0, ai + n)), 1));
     const ans = [0,1].map((n, i) => fn2(costSum(lstNfg.slice(0, ani + n), ai), 1));

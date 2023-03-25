@@ -19,8 +19,8 @@ const equipment = {
 	Vehicle: ["Ford Flex V20", "ATX1070 Superbike", "Mercedes-Benz S9001", "White Ferrari"],
 	Rootkit: ["NUKE Rootkit", "Soulstealer Rootkit", "Demon Rootkit", "Hmap Node", "Jack the Ripper"],
 	Augmentation: [
-		"Bionic Arms", "Bionic Legs", "Bionic Spine", "BrachiBlades", "Nanofiber Weave", "Synthetic Heart", "Synfibril Muscle", 
-		"BitWire", "Neuralstimulator", "DataJack", 
+		"Bionic Arms", "Bionic Legs", "Bionic Spine", "BrachiBlades", "Nanofiber Weave", "Synthetic Heart", "Synfibril Muscle",
+		"BitWire", "Neuralstimulator", "DataJack",
 		"Graphene Bone Lacings"],
 	AugmentationHack: ["BitWire", "Neuralstimulator", "DataJack"]
 }
@@ -116,7 +116,7 @@ export async function main(ns)
 				if (m.name != ethical) setMemberTask(ns, m.name, crimes[2]);
 			}
 			else
-				setMemberTask(ns, m.name, "Train Hacking");
+				setMemberTask(ns, m.name, Math.random() < 0.2 ? "Train Combat" : "Train Hacking");
 
 			for (const e of [...equipment.AugmentationHack, ...equipment.Rootkit])
 			{

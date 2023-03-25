@@ -24,7 +24,7 @@ export async function main(_ns)
     for (const fn of 'disableLog,scan,scp,asleep,sleep,exec,getServerUsedRam,getHackingLevel,nuke,brutessh,ftpcrack,relaysmtp,sqlinject,httpworm'.split(',')) ns.disableLog(fn);
 
     ns.atExit(() => ns.closeTail());
-    ns.tail();
+    // ns.tail();
 
     /** @type {Player} */
     let p;
@@ -35,12 +35,18 @@ export async function main(_ns)
     // flush port
     while (ns.readPort(1) != "NULL PORT DATA");
 
-    if (!ns.args.includes('-np')) ns.exec('purchase.js', 'home', 1, '-d');
     const autoTor = autoScript(ns, 'tor', () => p.money > 5e6 && !ns.fileExists('SQLInject.exe'));
-    const autoGang = autoScript(ns, 'gang', () => true || ns.heart.break() < -54e3);
+    const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
     const autoClear = autoScript(ns, 'clear', () => true);
     const autoHome = autoScript(ns, 'home', () => p.money > 5e6);
-    const autoWork = autoScript(ns, 'work', () => p.money > 5e6);
+    const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
+
+    const autoWalk = autoScript(ns, 'walk', () => true);
+    const autoPurch = autoScript(ns, 'purchase -d', () => !ns.args.includes('-P'));
+    const autoHud = autoScript(ns, 'hud', () => ns.getServerMaxRam('home') >= 64);
+
+    autoWalk();
+    autoPurch();
 
     for (var i = 0; ; i++)
     {
@@ -58,9 +64,13 @@ export async function main(_ns)
             errsPerSec -= 10;
 
             autoTor();
-            autoGang();
             autoHome();
-            autoWork();
+            if (p.factions.length > 0)
+            {
+                autoGang();
+                //autoWork();
+            }
+            autoHud();
         }
 
         await ns.asleep(1000);
@@ -76,11 +86,19 @@ function autoScript(ns, name, cond)
         if (!ns.isRunning(pid, 'home')) pid = 0;
         if (!pid && cond(...a))
         {
-            pid = ns.exec(name + '.js', 'home', 1);
-            if (pid) ns.tprint(`WARN auto ${name}`)
+            var arg = name.split(' ');
+            pid = ns.exec(arg[0] + '.js', 'home', 1, ...arg.slice(1));
+            if (pid) ns.tprint(`WARN auto ${name}`);
             else ns.tprint(`ERROR auto ${name} failed`);
         }
     }
+}
+
+const tasks = [];
+/** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => void)} */
+function autoTask(ns, name, cond)
+{
+    return (...a) => cond(...a) && tasks.push(() => ns.exec(name + '.js', 'home', 1));
 }
 
 /** @param {string} s */

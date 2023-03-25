@@ -4,8 +4,8 @@ import * as srvd from "./serverData";
 /** @param {NS} ns */
 export async function main(ns)
 {
-    init(ns);
-    checkServer(ns, srvd.getServer(String(ns.args[0])))
+	init(ns);
+	checkServer(ns, srvd.getServer(String(ns.args[0])))
 }
 
 /** @param {NS} ns */
@@ -31,20 +31,20 @@ export function checkServer(ns, s)
 	}
 }
 
-const bdoors = /** @type {{[name:string]:bool}} */ {};
+const bdoors = /** @type {{[name:string]:boolean}} */ ({});
 /** @type {(ns:NS, path: string[]) => void} */
 function backdoor(ns, path)
 {
 	try
 	{
-		const name = path[path.length-1];
+		const name = path[path.length - 1];
 		if (bdoors[name]) return;
 		var pid = ns.exec("backdoor.js", "home", 1, ...path);
 		if (!pid) return ns.tprint(`ERROR backdooring ${name} failed`);
 		bdoors[name] = true;
 		ns.tprint(`INFO backdooring ${name} : ${pid}`);
 	}
-	catch(e)
+	catch (e)
 	{
 		if (path.length < 4 || ns.args.includes("-a"))
 			ns.tprint(`  home;connect ${path.join(";connect ")};backdoor`);

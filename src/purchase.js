@@ -1,10 +1,11 @@
 import * as srvd from "./serverData";
 import { BBServerData } from "./servers";
-import { fn, fn2, logn } from "./util";
+import { fn, fn2, logn, Timer } from "./util";
 
 /** @type {Partial<BBServerData>} */
 let data = {};
-let lastPurchase = Date.now();
+let tPurch = new Timer();
+let tBump = new Timer();
 
 /** @param {NS} ns */
 export async function main(ns)
@@ -14,7 +15,8 @@ export async function main(ns)
     else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]));
     else if (ns.args[0] == "-k") ns.kill('purchase.js', 'home', '-d') && ns.tprint('killed purchase.js');
     else if (ns.args[0] == "-d") await daemon(ns);
-    else {
+    else
+    {
         const servers = ns.getPurchasedServers()
             .map(s => data.servers[s])
             .sort((a, b) => a.maxRam - b.maxRam);
@@ -25,19 +27,22 @@ export async function main(ns)
 /** @param {NS} ns **/
 async function daemon(ns)
 {
-    const maxRam = 20;
+    let maxRam = 1;
     let ramLvl = 4; // hack script size
+
+    while (ns.getPurchasedServerCost(2 << maxRam) != Infinity) maxRam++;
 
     // purchased server list
     const servers = ns.getPurchasedServers()
         .map(s => data.servers[s])
         .sort((a, b) => a.maxRam - b.maxRam);
-    
-    const ramBump = () => {
-        ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl)} -> ${getRamStr(ns, 1 << ramLvl + 1)}`);
+
+    const ramBump = () =>
+    {
+        ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl)} -> ${getRamStr(ns, 1 << ramLvl + 1)} (${tBump.next()}s)`);
         ramLvl++;
     }
-    
+
     // update ramLvl to greatest purchased server
     if (servers.length > 0)
     {
@@ -47,7 +52,7 @@ async function daemon(ns)
 
     // general info
     ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`)
-    printCount(ns, servers)
+    printCount(ns, servers, ramLvl)
 
     // flush port
     while (ns.readPort(2) != "NULL PORT DATA");
@@ -71,10 +76,9 @@ async function daemon(ns)
             ns.killall(servers[0].hostname);
             ns.deleteServer(servers[0].hostname);
 
-            const sum = servers.map(s => s.maxRam).reduce((a,b) => a + b, 0);
+            const sum = servers.map(s => s.maxRam).reduce((a, b) => a + b, 0);
             const gainRat = (sum - servers[0].maxRam + ram) / sum - 1;
-            // ns.tprint(`purchase dt ${fn(Date.now()-lastPurchase, -3, 0)}s gain: ${fn(gainRat, 2, 1)}%`);
-            lastPurchase = Date.now();
+            // ns.tprint(`purchase dt ${tPurch.next()}s gain: ${fn(gainRat, 2, 1)}%`);
             servers.shift();
         }
         else
@@ -84,25 +88,28 @@ async function daemon(ns)
             const s = ns.getServer(sname);
             ns.writePort(1, `sa ${s.hostname}`);
             servers.push(s);
-            printCount(ns, servers, ' + ' + s.hostname);
+            printCount(ns, servers, ramLvl, ' + ' + s.hostname);
 
-            if (ramLvl < maxRam && servers[data.srvLimit*0.6|0]?.maxRam >= 1 << ramLvl) ramBump();
+            if (ramLvl <= maxRam && servers[data.srvLimit * 0.6 | 0]?.maxRam >= 1 << ramLvl) ramBump();
         }
     }
 
     ns.tprint("WARN maxed on servers, terminated");
 }
 
-/** @type {(ns:NS, list:Server[], newserv?:string) => void} */
-function printCount(ns, servers, newserv = '')
+/** @type {(ns:NS, list:Server[], ramLvl?:number, newserv?:string) => void} */
+function printCount(ns, servers, ramLvl, newserv = '')
 {
     const counts = /** @type {{[x:string]: number}} */ ({});
+    if (newserv) newserv += `  (${tPurch.next()}s)`;
     servers.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
-    ns.tprint(`INFO ${servers.length}/${data.srvLimit}: ` + Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ") + newserv)
+    ns.tprint(
+        `INFO ${servers.length}/${data.srvLimit} [${fn2(ns.getPurchasedServerCost(1 << ramLvl))}]: ` +
+        Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ") + newserv);
 }
 
 /** @type {(ns:NS, n:number) => string} */
 function getRamStr(ns, n)
 {
-    return `${Math.log2(n)}:${fn2(n)} [${fn2(ns.getPurchasedServerCost(n))}]`;
+    return `${Math.log2(n)}`;
 }

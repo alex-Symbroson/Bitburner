@@ -53,9 +53,9 @@ function enslave(host, ws, threads, n)
     else action = "hack"
 
     // if (_stats.active[t.hostname][action].length >= maxSame) return (_stats.idle++, -1)
-    
+
     const fMoney = ` ${fn2(t.moneyAvailable)}/${fn2(moneyThresh)}/${fn2(t.moneyMax)} `;
-    const fSec = ` ${t.hackDifficulty|0}/${secThresh|0}/${t.minDifficulty|0} `;
+    const fSec = ` ${t.hackDifficulty | 0}/${secThresh | 0}/${t.minDifficulty | 0} `;
     const xargs = [fMoney, fSec].join(", ")
 
     const pid = ns.exec(`s_${action}.js`, host.hostname, threads, t.hostname, threads, '--', xargs, n);
@@ -65,7 +65,9 @@ function enslave(host, ws, threads, n)
 }
 
 /** @param {Server} s */
-const getAvail = s => (s.maxRam * (s.hostname == 'home' ? 0.8 : 1) - ns.getServerUsedRam(s.hostname));
+const getAvail = s => (s.hostname == 'home'
+    ? ((s.maxRam > 100 ? s.maxRam - 100 : 0) - ns.getServerUsedRam(s.hostname))
+    : (s.maxRam - ns.getServerUsedRam(s.hostname)));
 
 /** @type {(s: Server, ram: number, exec: (threads: number, n: number) => number) => void} */
 function mine(s, ram, exec)
@@ -80,7 +82,7 @@ function mine(s, ram, exec)
     const execerr = (x = 0) =>
         ns.tprint(`ERROR exec ${x} ${threads} ${s.hostname} ${threads * ram}/${fn(getAvail(s), 0, 2)}`)
 
-    if (!n && buf < 50)
+    if (!n && buf <= minThreads)
         exec(threads, 0) || execerr(2);
     else while (n--)
     {
