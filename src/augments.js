@@ -2,22 +2,31 @@ import { fn, fn2 } from './util'
 
 /** @typedef {{name:string,faction:string,stats:string[],price:number}} Aug */
 
-const AUG_MULT = 1.9, NFG_MULT = 1.14, NFG = "NeuroFlux Governor";
+const AUG_MULT = 1.9, NFG_MULT = 1.9 * 1.14, NFG = "NeuroFlux Governor";
 
 /** @param {NS} ns */
 export async function main(ns)
 {
-    check(ns);
+    if (!ns.args.includes('-c')) check(ns);
 
-    while (ns.args.includes('-d'))
+    if (ns.args.includes('-c'))
     {
-        ns.asleep(10000);
-        check(ns, true);
+        for (let i = 0; i < 5; i++) if (!check(ns, 'a')) break;
+        for (let i = 0; i < 5; i++) if (!check(ns, 'n')) break;
+        check(ns, 'R');
+    }
+    else if (ns.args.includes('-d'))
+    {
+        while (true)
+        {
+            ns.asleep(10000);
+            check(ns, '*');
+        }
     }
 }
 
-/** @type {(ns:NS, auto?:boolean) => void} */
-function check(ns, auto = false)
+/** @type {(ns:NS, auto?:string) => number} */
+function check(ns, auto = null)
 {
     const allow = [NFG, "Neuroreceptor Management Implant", "The Red Pill"]
     const p = ns.getPlayer();
@@ -64,33 +73,59 @@ function check(ns, auto = false)
     const ni = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
     const ani = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1), ai) > p.money);
 
-    if (ns.args.includes('-i'))
-    {
-        ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
-        ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
-    }
-    const ags = [0, 1].map(n => fn2(costSum(lstAugs.slice(0, ai + n)), 1));
-    const ans = [0, 1].map((n, i) => fn2(costSum(lstNfg.slice(0, ani + n), ai), 1));
-    const ngs = [0, 1].map(n => fn2(costSum(lstNfg.slice(0, ni + n)), 1));
-    ns.tprint(`${ai} Augs ${ags.join(' ')}    + ${ani} NFG ${ans.join(' ')}    ${ni} NeuroFlux ${ngs.join(' ')}`);
+    if (auto && exp + ai + ani < 5) return;
 
-    if (ns.args.includes('-p'))
+    if (true || !auto)
     {
-        const pi = ns.args.indexOf('-p');
+        if (ns.args.includes('-i'))
+        {
+            ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
+            ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
+        }
+        const ags = [0, 1].map(n => fn2(costSum(lstAugs.slice(0, ai + n)), 1));
+        const ans = [0, 1].map((n, i) => fn2(costSum(lstNfg.slice(0, ani + n), ai), 1));
+        const ngs = [0, 1].map(n => fn2(costSum(lstNfg.slice(0, ni + n)), 1));
+        ns.tprint(`${ai} Augs ${ags.join(' ')}    + ${ani} NFG ${ans.join(' ')}    ${ni} NeuroFlux ${ngs.join(' ')}`);
+    }
+
+    var sum = 0;
+    if (ns.args.includes('-p') || ("an".includes(auto) && checkInstall(ns, exp + ai + ani)))
+    {
+        if (!auto) auto = String(ns.args[1 + ns.args.indexOf('-p')]);
 
         var tn = 0, nn = 0;
-        if (ns.args[pi + 1] != 'n')
+        if (auto != 'n')
             for (const a of lstAugs.slice(0, ai).reverse())
                 if (ns.singularity.purchaseAugmentation(a.faction, a.name)) tn++;
+                else break;
 
-        if (ns.args[pi + 1] != 'a')
+        if (auto != 'a')
             for (const a of lstNfg.slice(0, ni))
                 if (ns.singularity.purchaseAugmentation(a.faction, a.name)) nn++;
+                else break;
 
+        sum = tn + nn;
         ns.tprint(`purchased ${tn} Augs and ${nn} NeuroFlux`);
     }
 
-    if (ns.args.includes('-R')) ns.singularity.installAugmentations("autorun.js");
+    if (ns.args.includes('-R') || (auto == "R" && checkInstall(ns)))
+    {
+        if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
+        else ns.tprint("WARN INSTALL AUGS");
+        ns.singularity.installAugmentations("autorun.js");
+    }
+
+    return sum;
+}
+
+/** @type {(ns:NS, n?:number) => boolean} */
+function checkInstall(ns, n = null)
+{
+    const no = ns.singularity.getOwnedAugmentations().length;
+    if (n === null) n = ns.singularity.getOwnedAugmentations(true).length - no;
+    ns.tprint("checki: " + n);
+    if (no < 40) return n >= 10;
+    return n >= 14;
 }
 
 /** @param {Aug[]} list */

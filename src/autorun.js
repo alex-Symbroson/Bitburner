@@ -21,6 +21,7 @@ const stats = { idle: 0, all: new SProcStats(), active: {} }
 export async function main(_ns)
 {
     ns = _ns;
+    ns.singularity.connect("home");
     for (const fn of 'disableLog,scan,scp,asleep,sleep,exec,getServerUsedRam,getHackingLevel,nuke,brutessh,ftpcrack,relaysmtp,sqlinject,httpworm'.split(',')) ns.disableLog(fn);
 
     ns.atExit(() => ns.closeTail());
@@ -39,11 +40,12 @@ export async function main(_ns)
     const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
     const autoClear = autoScript(ns, 'clear', () => true);
     const autoHome = autoScript(ns, 'home', () => p.money > 5e6);
-    const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
+    // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
 
     const autoWalk = autoScript(ns, 'walk', () => true);
     const autoPurch = autoScript(ns, 'purchase -d', () => !ns.args.includes('-P'));
     const autoHud = autoScript(ns, 'hud', () => ns.getServerMaxRam('home') >= 64);
+    const autoAug = autoScript(ns, 'augments -c', () => true);
 
     autoWalk();
     autoPurch();
@@ -65,13 +67,11 @@ export async function main(_ns)
 
             autoTor();
             autoHome();
-            if (p.factions.length > 0)
-            {
-                autoGang();
-                //autoWork();
-            }
+            if (p.factions.length > 0) autoGang();
             autoHud();
         }
+
+        if (i % 97 == 0) autoAug();
 
         await ns.asleep(1000);
     }
