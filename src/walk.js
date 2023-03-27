@@ -6,8 +6,7 @@ import { task } from "./utilTask";
 /** @param {NS} ns */
 export async function main(ns)
 {
-	/** @type {Player} */
-	var p;
+	var p = ns.getPlayer();
 	var tCur = 0;
 
 	/** @type {GymSt[]} */
@@ -15,6 +14,7 @@ export async function main(ns)
 	/** @type {(a:GymSt, b:GymSt) => number} */
 	const gymStCmp = (a, b) => p.skills[a] - p.skills[b];
 	const nextGymSt = () => gymSt.sort(gymStCmp)[0];
+	const naug = Number(ns.read('naug.dat'));
 
 	const actions = [
 		new Action(
@@ -31,7 +31,7 @@ export async function main(ns)
 			() => !ns.gang.inGang() && p.money < 15e6,
 			() => task(ns, "crime", "Larceny")),
 		new Action(
-			() => !ns.gang.inGang(),
+			() => !ns.gang.inGang() && (ns.heart.break() < ([10e3, 25e3][naug] || 1e9)),
 			() => task(ns, "crime", "Homicide")),
 	];
 

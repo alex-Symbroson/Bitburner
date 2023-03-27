@@ -44,7 +44,7 @@ interface Person {
 }
 
 /** @public */
-interface Player extends Person {
+export interface Player extends Person {
   money: number;
   numPeopleKilled: number;
   entropy: number;
@@ -58,7 +58,7 @@ interface Player extends Person {
 }
 
 /** @public */
-interface SleevePerson extends Person {
+export interface SleevePerson extends Person {
   /** Number 0-100 Experience earned and shared is multiplied with shock% before sync% */
   shock: number;
   /** Number 1-100 Experience earned by this sleeve and shared with the player is multiplied with sync% after shock% */
@@ -70,7 +70,7 @@ interface SleevePerson extends Person {
 }
 
 /** @public */
-interface MoneySource {
+export interface MoneySource {
   bladeburner: number;
   casino: number;
   class: number;
@@ -457,7 +457,7 @@ interface HacknetServerConstants {
  * A single server.
  * @public
  */
-interface Server {
+export interface Server {
   /**
    * How many CPU cores this server has. Maximum of 8.
    * Affects magnitude of grow and weaken.
@@ -801,7 +801,7 @@ interface GangTerritory {
 }
 
 /** @public */
-interface GangMemberInfo {
+export interface GangMemberInfo {
   /** Name of the gang member */
   name: string;
   /** Currently assigned task */

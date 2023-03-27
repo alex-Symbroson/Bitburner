@@ -9,6 +9,7 @@ export async function main(ns)
         if (!ns.args.length || ns.args.includes("-k")) ns.killall(s);
         if (!ns.args.length || ns.args.includes("-x")) clear(ns, s);
         if (!ns.args.length || ns.args.includes("-c")) copy(ns, s);
+        if (ns.args.includes("-f")) rmall(ns, s);
         await ns.sleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)
@@ -42,4 +43,10 @@ export function copy(ns, s)
         // if (ns.fileExists(f, s)) ns.rm(f, s) || err(ns, "rm " + f);
         ns.scp(f, s) || ns.tprint('ERROR copy ' + f)
     }
+}
+
+/** @type {(ns:NS, s:string) => void} */
+export function rmall(ns, s)
+{
+    for (var f of ns.ls(s, ".js")) ns.rm(f);
 }

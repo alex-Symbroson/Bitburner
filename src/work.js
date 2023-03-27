@@ -29,7 +29,7 @@ export async function main(ns)
 
 		for (var f of facs)
 		{
-			if (f.favor >= 150) task(ns, "donate", f.name, p.money / 400);
+			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
 			else if (newFavor(ns, f) < 150) { newWorkFac = f.name; break; }
 			else if (!lstSkip.includes(f.name))
 			{

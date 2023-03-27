@@ -26,56 +26,6 @@ const equipment = {
 	AugmentationHack: ["BitWire", "Neuralstimulator", "DataJack"]
 }
 
-/*
-o={'0':0,k:"e3",m:"e6",b:"e9",t:"e12"}
-l=[...document.querySelectorAll(".css-1frkqed")]
-.map(e => Number(e.innerText.slice(1,-1) + o[e.innerText.slice(-1)]))
-l.reverse().slice(70,-1).map((e,i)=>e*1.9**i).map(e=>e.toExponential())
-
-var cur=null, list={}
-
-if(typeof itv!="undefined")clearInterval(itv)
-var itv=setInterval(()=>{
-	var t=document.querySelector('#terminal')
-	if(!t)return;
-	list={};var li=0, lines = t.innerText.split("\n").slice(-100).reverse();
-	var cmds = lines.filter((s,i) => (li==0 || i-li < 10) && s.startsWith("autorun.js:   home;") && (li=i))
-	cmds.map(l=>list[l]=1)
-},5000)
-
-if(typeof itvCopy!="undefined")clearInterval(itvCopy)
-var itvCopy=setInterval(()=>{
-	var t=document.querySelector('#terminal')
-	var ti=document.querySelector('#terminal-input')
-	if(!t||!ti)return;
-
-	for(var c in list){
-		var s = c.match(/ (\S+?);backdoor$/)[1]
-		if(t.innerText.includes(s+"' successful!")) delete list[c]
-	}
-
-	var cmds = Object.keys(list).reverse()
-	if (!cmds.length) return
-	copyTextToClipboard(cmds[0].slice(14))
-	ti.focus()
-},500);
-
-function copyTextToClipboard(text) {
-  var textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.top = textArea.style.left = "0";
-  textArea.style.position = "fixed";
-
-  document.body.appendChild(textArea);
-  textArea.focus(); textArea.select();
-
-  try { document.execCommand('copy'); } 
-  catch (err) { console.error('copy2clipboard failed', err); }
-  document.body.removeChild(textArea);
-}
-*/
-
-
 /** @type {{[name: string]: string}} */
 const tasks = {};
 var ethical = "";
@@ -130,6 +80,7 @@ export async function main(ns)
 					player.money -= cost;
 				}
 			}
+			await ns.sleep(100);
 		}
 
 		if (!ethical)
@@ -144,14 +95,15 @@ export async function main(ns)
 			const name = selectRandom(names)[memberNames.length];
 			ns.tprint("INFO recruiting " + name);
 			dotask(ns, "grecruit", name);
+			await ns.sleep(100);
 			memberNames.push(name);
 			dotask(ns, "gtask", name, "Train Hacking");
 		}
-		await ns.sleep(2000);
+		await ns.sleep(1000);
 	}
 }
 
-/** @type {(ns: NS, name: string, task?: string) => number} */
+/** @type {(ns: NS, name: string, task?: string) => boolean} */
 function setMTask(ns, name, task = null)
 {
 	if (name == ethical) ethical = null;
@@ -160,7 +112,7 @@ function setMTask(ns, name, task = null)
 	else if (tasks[name] != task) tasks[name] = task;
 
 	// ns.tprint(`task ${name}: ${task}.`);
-	return dotask(ns, "gtask", name, task);
+	return ns.gang.setMemberTask(name, task);
 }
 
 // Credit: Mysteyes. https://discord.com/channels/415207508303544321/415207923506216971/940379724214075442

@@ -21,31 +21,32 @@ const stats = { idle: 0, all: new SProcStats(), active: {} }
 export async function main(_ns)
 {
     ns = _ns;
-    ns.singularity.connect("home");
     for (const fn of 'disableLog,scan,scp,asleep,sleep,exec,getServerUsedRam,getHackingLevel,nuke,brutessh,ftpcrack,relaysmtp,sqlinject,httpworm'.split(',')) ns.disableLog(fn);
 
     ns.atExit(() => ns.closeTail());
     // ns.tail();
 
-    /** @type {Player} */
-    let p;
+    let homeRam = ns.getServerMaxRam('home');
+    let p = ns.getPlayer();
     data = srvd.init(ns = _ns);
     enslave.init(ns = _ns, stats);
     hack.init(ns = _ns);
 
     // flush port
     while (ns.readPort(1) != "NULL PORT DATA");
+    autoScript(ns, "t_connect home", () => true)();
+    await ns.asleep(0.1);
 
-    const autoTor = autoScript(ns, 'tor', () => p.money > 5e6 && !ns.fileExists('SQLInject.exe'));
+    const autoTor = autoScript(ns, 'tor', () => homeRam >= 64 && !ns.fileExists('SQLInject.exe'));
     const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
     const autoClear = autoScript(ns, 'clear', () => true);
     const autoHome = autoScript(ns, 'home', () => p.money > 5e6);
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
 
     const autoWalk = autoScript(ns, 'walk', () => true);
-    const autoPurch = autoScript(ns, 'purchase -d', () => !ns.args.includes('-P'));
-    const autoHud = autoScript(ns, 'hud', () => ns.getServerMaxRam('home') >= 64);
-    const autoAug = autoScript(ns, 'augments -c', () => true);
+    const autoPurch = autoScript(ns, 'purchase -d', () => homeRam >= 64 && !ns.args.includes('-P'));
+    const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
+    const autoAug = autoScript(ns, 'augments -c', () => homeRam >= 256);
 
     autoWalk();
     autoPurch();
@@ -61,12 +62,13 @@ export async function main(_ns)
 
         if (i % 10 == 0)
         {
+            homeRam = ns.getServerMaxRam('home')
             p = ns.getPlayer();
             printStats();
             errsPerSec -= 10;
 
-            autoTor();
             autoHome();
+            autoTor();
             if (p.factions.length > 0) autoGang();
             autoHud();
         }
@@ -80,16 +82,21 @@ export async function main(_ns)
 /** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => void)} */
 function autoScript(ns, name, cond)
 {
+    var arg = name.split(' ');
+    name = arg[0];
+
     var pid = ns.ps().find(s => s.filename == name + '.js')?.pid || 0;
     return (...a) =>
     {
         if (!ns.isRunning(pid, 'home')) pid = 0;
         if (!pid && cond(...a))
         {
-            var arg = name.split(' ');
-            pid = ns.exec(arg[0] + '.js', 'home', 1, ...arg.slice(1));
-            if (pid) ns.tprint(`WARN auto ${name}`);
-            else ns.tprint(`ERROR auto ${name} failed`);
+            pid = ns.exec(name + '.js', 'home', 1, ...arg.slice(1));
+            if (!name.startsWith("t_") && name != "augments")
+            {
+                if (pid) ns.tprint(`WARN auto ${name}`);
+                else ns.tprint(`ERROR auto ${name} failed`);
+            }
         }
     }
 }

@@ -36,14 +36,16 @@ function check(ns, auto = null)
 
     /** @type {{[x:string]:Aug}} */
     const augs = {};
-    const installed = ns.singularity.getOwnedAugmentations(true);
-    const exp = installed.length - ns.singularity.getOwnedAugmentations().length;
+    const installedAugs = ns.singularity.getOwnedAugmentations();
+    const ownedAugs = ns.singularity.getOwnedAugmentations(true);
+    const purchased = ownedAugs.length - installedAugs.length;
+    if (installedAugs.length == 0) ns.write("naug.txt", "0", "w");
 
     for (const f of fs)
     {
         for (const a of ns.singularity.getAugmentationsFromFaction(f.name))
         {
-            if (a != NFG && installed.includes(a) || ns.singularity.getAugmentationRepReq(a) > f.rep) continue;
+            if (a != NFG && ownedAugs.includes(a) || ns.singularity.getAugmentationRepReq(a) > f.rep) continue;
 
             const s = ns.singularity.getAugmentationStats(a);
             /** @type {(keyof s)[]} */
@@ -55,7 +57,7 @@ function check(ns, auto = null)
             augs[a] = {
                 name: a, faction: f.name,
                 stats: ss.filter(k => s[k] != 1).map(k => k.split('_').map(k => k[0]).join('')),
-                price: ns.singularity.getAugmentationBasePrice(a) * AUG_MULT ** exp
+                price: ns.singularity.getAugmentationBasePrice(a) * AUG_MULT ** purchased
             };
         }
     }
@@ -73,7 +75,7 @@ function check(ns, auto = null)
     const ni = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
     const ani = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1), ai) > p.money);
 
-    if (auto && exp + ai + ani < 5) return;
+    if (auto && purchased + ai + ani < 5) return;
 
     if (true || !auto)
     {
@@ -89,7 +91,7 @@ function check(ns, auto = null)
     }
 
     var sum = 0;
-    if (ns.args.includes('-p') || ("an".includes(auto) && checkInstall(ns, exp + ai + ani)))
+    if (ns.args.includes('-p') || ("an".includes(auto) && checkInstall(ns, purchased + ai + ani)))
     {
         if (!auto) auto = String(ns.args[1 + ns.args.indexOf('-p')]);
 
@@ -112,6 +114,8 @@ function check(ns, auto = null)
     {
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
+        const naug = Number(ns.read('naug.txt'));
+        ns.write('naug.txt', String(naug + 1), "w");
         ns.singularity.installAugmentations("autorun.js");
     }
 
@@ -124,8 +128,8 @@ function checkInstall(ns, n = null)
     const no = ns.singularity.getOwnedAugmentations().length;
     if (n === null) n = ns.singularity.getOwnedAugmentations(true).length - no;
     ns.tprint("checki: " + n);
-    if (no < 40) return n >= 10;
-    return n >= 14;
+    if (no < 40) return n >= 9;
+    return n >= 12;
 }
 
 /** @param {Aug[]} list */
