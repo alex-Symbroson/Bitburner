@@ -1,8 +1,19 @@
 import { fn, fn2 } from './util'
+import { task } from './utilTask';
 
-/** @typedef {{name:string,faction:string,stats:string[],price:number}} Aug */
+/** @typedef {import('./work').Fac} Fac */
+/** @typedef {{name:string,fac:Fac,stats:string[],price:number,rep:number}} Aug */
 
-const AUG_MULT = 1.9, NFG_MULT = 1.9 * 1.14, NFG = "NeuroFlux Governor";
+const AUG_THRES = 12;
+const AUG_MULT = 1.9;
+const NFG_MULT = 1.9 * 1.14;
+const NFG = "NeuroFlux Governor";
+
+/** @type {(keyof import('../Bitburner.t').Multipliers)[]} */
+const wantedStats = [
+    "faction_rep",
+    "hacking", "hacking_exp", "hacking_grow", "hacking_money", "hacking_speed"
+];
 
 /** @param {NS} ns */
 export async function main(ns)
@@ -31,40 +42,38 @@ function check(ns, auto = null)
     const allow = [NFG, "Neuroreceptor Management Implant", "The Red Pill"]
     const p = ns.getPlayer();
     const fs = p.factions
-        .map(name => ({ name, rep: ns.singularity.getFactionRep(name) }))
+        .map(getFaction.bind(null, ns))
         .sort((a, b) => b.rep - a.rep);
 
     /** @type {{[x:string]:Aug}} */
-    const augs = {};
+    const buyAugs = {};
+    /** @type {Aug[]} */
+    const allAugs = [];
     const installedAugs = ns.singularity.getOwnedAugmentations();
     const ownedAugs = ns.singularity.getOwnedAugmentations(true);
     const purchased = ownedAugs.length - installedAugs.length;
-    if (installedAugs.length == 0) ns.write("naug.txt", "0", "w");
+    if (installedAugs.length < 4) ns.write("naug.txt", "0", "w");
 
     for (const f of fs)
     {
         for (const a of ns.singularity.getAugmentationsFromFaction(f.name))
         {
-            if (a != NFG && ownedAugs.includes(a) || ns.singularity.getAugmentationRepReq(a) > f.rep) continue;
-
-            const s = ns.singularity.getAugmentationStats(a);
-            /** @type {(keyof s)[]} */
-            const ss = [
-                "faction_rep",
-                "hacking", "hacking_exp", "hacking_grow", "hacking_money", "hacking_speed"
-            ];
-            if (!allow.includes(a) && ss.findIndex(k => s[k] != 1) == -1) continue;
-            augs[a] = {
-                name: a, faction: f.name,
-                stats: ss.filter(k => s[k] != 1).map(k => k.split('_').map(k => k[0]).join('')),
-                price: ns.singularity.getAugmentationBasePrice(a) * AUG_MULT ** purchased
-            };
+            const aug = getAugmentation(ns, f, a, purchased);
+            if (a == NFG || !ownedAugs.includes(a))
+            {
+                if (allow.includes(a) || aug.stats.length)
+                {
+                    if (a != NFG) allAugs.push(aug);
+                    if (aug.rep <= f.rep) buyAugs[a] = aug;
+                }
+            }
         }
     }
-    const nfg = augs[NFG];
-    delete augs[NFG];
+    const nfg = buyAugs[NFG];
+    delete buyAugs[NFG];
 
-    const lstAugs = Object.values(augs).sort((a, b) => a.price - b.price);
+    suggestWorkFac(ns, allAugs);
+    const lstAugs = Object.values(buyAugs).sort((a, b) => a.price - b.price);
 
     let ai = lstAugs.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
     if (ai == -1) ai = lstAugs.length == 0 ? 0 : (costSum(lstAugs) > p.money ? 0 : lstAugs.length);
@@ -81,8 +90,8 @@ function check(ns, auto = null)
     {
         if (ns.args.includes('-i'))
         {
-            ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
-            ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.faction}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
+            ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.fac.name}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
+            ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.fac.name}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
         }
         const ags = [0, 1].map(n => fn2(costSum(lstAugs.slice(0, ai + n)), 1));
         const ans = [0, 1].map((n, i) => fn2(costSum(lstNfg.slice(0, ani + n), ai), 1));
@@ -98,12 +107,12 @@ function check(ns, auto = null)
         var tn = 0, nn = 0;
         if (auto != 'n')
             for (const a of lstAugs.slice(0, ai).reverse())
-                if (ns.singularity.purchaseAugmentation(a.faction, a.name)) tn++;
+                if (ns.singularity.purchaseAugmentation(a.fac.name, a.name)) tn++;
                 else break;
 
         if (auto != 'a')
             for (const a of lstNfg.slice(0, ni))
-                if (ns.singularity.purchaseAugmentation(a.faction, a.name)) nn++;
+                if (ns.singularity.purchaseAugmentation(a.fac.name, a.name)) nn++;
                 else break;
 
         sum = tn + nn;
@@ -114,9 +123,7 @@ function check(ns, auto = null)
     {
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
-        const naug = Number(ns.read('naug.txt'));
-        ns.write('naug.txt', String(naug + 1), "w");
-        ns.singularity.installAugmentations("autorun.js");
+        task(ns, "installAugs");
     }
 
     return sum;
@@ -129,7 +136,7 @@ function checkInstall(ns, n = null)
     if (n === null) n = ns.singularity.getOwnedAugmentations(true).length - no;
     ns.tprint("checki: " + n);
     if (no < 40) return n >= 9;
-    return n >= 12;
+    return n >= AUG_THRES;
 }
 
 /** @param {Aug[]} list */
@@ -138,6 +145,55 @@ function costSum(list, si = 0, exp = AUG_MULT)
     return list.reverse()
         .map((e, i) => e.price * exp ** (si + i))
         .reduce((a, b) => a + b, 0);
+}
+
+/** @type {(ns:NS, lstAugs:Aug[]) => void} */
+function suggestWorkFac(ns, allAugs)
+{
+    allAugs
+        .sort((a, b) => a.rep - b.rep)
+        .slice(0, AUG_THRES)
+        .sort((a, b) =>
+        {
+            let diffA = a.fac.rep < a.rep ? a.fac.rep - a.rep : Infinity;
+            let diffB = b.fac.rep < b.rep ? b.fac.rep - b.rep : Infinity;
+            return diffA - diffB;
+        });
+
+    /** @type {{[x:string]:Aug[]}} */
+    const facs = {};
+    for (const a of allAugs)
+        facs[a.fac.name] = [...(facs[a.fac.name] || []), a];
+
+    ns.write("workFac.txt", allAugs[0].fac.name, "w");
+    // ns.tprint('\n' + allAugs.map(a => `${fn2(a.rep)}:${fn((1 + a.fac.favor / 100))} [${fn2(a.price)}$] ${a.fac.name}:${a.name}`).join('\n'));
+    ns.tprint('\n' + Object.entries(facs)
+        .sort((a, b) => b[1].length - a[1].length)
+        .map(([fname, augs]) => `${fname} ${fn2(augs[0].fac.favor)}:${fn2(augs[0].fac.rep)}` +
+            augs.map(a => `\n\t${fn2(a.rep)}-${fn2(a.rep * (1 - 100 / (a.fac.favor + 100)))} ${a.name}`).join(''))
+        .join('\n'));
+}
+
+/** @type {(ns:NS, name:string) => Fac} */
+function getFaction(ns, name)
+{
+    return {
+        name,
+        rep: ns.singularity.getFactionRep(name),
+        favor: ns.singularity.getFactionFavor(name)
+    }
+}
+
+/** @type {(ns:NS, fac:Fac, name:string, purchased:number) => Aug} */
+function getAugmentation(ns, fac, name, purchased)
+{
+    const s = ns.singularity.getAugmentationStats(name);
+    return {
+        name, fac,
+        rep: ns.singularity.getAugmentationRepReq(name),
+        price: ns.singularity.getAugmentationBasePrice(name) * AUG_MULT ** purchased,
+        stats: wantedStats.filter(k => s[k] != 1).map(k => k.split('_').map(k => k[0]).join(''))
+    };
 }
 
 /** @param {NS} ns 

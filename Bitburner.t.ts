@@ -99,7 +99,7 @@ interface MoneySources {
 }
 
 /** @public */
-interface Multipliers {
+export interface Multipliers {
   /** Multiplier to hacking skill */
   hacking: number;
   /** Multiplier to strength skill */

@@ -46,7 +46,7 @@ export async function main(_ns)
     const autoWalk = autoScript(ns, 'walk', () => true);
     const autoPurch = autoScript(ns, 'purchase -d', () => homeRam >= 64 && !ns.args.includes('-P'));
     const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
-    const autoAug = autoScript(ns, 'augments -c', () => homeRam >= 256);
+    const autoAug = autoScript(ns, 'augments -c', () => homeRam >= 1 << 10 || p.factions.includes("CyberSec"));
     const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
     autoWalk();

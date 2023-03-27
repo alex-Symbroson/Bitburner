@@ -25,17 +25,26 @@ export async function main(ns)
 			if (facs[0].name == ns.gang.getGangInformation().faction) facs.shift();
 		} catch (e) { }
 
-		var newWorkFac = workFac;
+		/** @type {Fac[]} */
+		const workFacs = [];
 
 		for (var f of facs)
 		{
 			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
-			else if (newFavor(ns, f) < 150) { newWorkFac = f.name; break; }
+			else if (newFavor(ns, f) < 150) workFacs.push(f);
 			else if (!lstSkip.includes(f.name))
 			{
 				lstSkip.push(f.name);
 				ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
 			}
+		}
+
+		var newWorkFac = ns.read("workFac.txt");
+		const wf = workFacs[0];
+		if (!workFacs.find(f => f.name == newWorkFac) || wf.favor > 100)
+		{
+			if (workFac != wf.name) ns.tprint(`WARN skip suggested workFac ${newWorkFac} for ${wf.name}:${wf.favor}`)
+			newWorkFac = wf.name;
 		}
 
 		// if (p.factions.includes("Daedalus")) newWorkFac = "Daedalus";
