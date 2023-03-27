@@ -47,6 +47,7 @@ export async function main(_ns)
     const autoPurch = autoScript(ns, 'purchase -d', () => homeRam >= 64 && !ns.args.includes('-P'));
     const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
     const autoAug = autoScript(ns, 'augments -c', () => homeRam >= 256);
+    const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
     autoWalk();
     autoPurch();
@@ -74,6 +75,7 @@ export async function main(_ns)
         }
 
         if (i % 97 == 0) autoAug();
+        if (i % 506 == 0) autoDestroy();
 
         await ns.asleep(1000);
     }
