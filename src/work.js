@@ -1,7 +1,8 @@
 /** @typedef {{name:string,favor:number,rep:number}} Fac */
 import { fn2 } from "./util";
+import { task } from "./utilTask";
 
-var lstSkip = [];
+var lstSkip = /** @type {string[]} */ ([]);
 
 /** @param {NS} ns */
 export async function main(ns)
@@ -28,7 +29,7 @@ export async function main(ns)
 
 		for (var f of facs)
 		{
-			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
+			if (f.favor >= 150) task(ns, "donate", f.name, p.money / 400);
 			else if (newFavor(ns, f) < 150) { newWorkFac = f.name; break; }
 			else if (!lstSkip.includes(f.name))
 			{
@@ -42,7 +43,7 @@ export async function main(ns)
 		if (newWorkFac && workFac != newWorkFac)
 		{
 			ns.tprint("WARN working for " + newWorkFac);
-			if (newWorkFac) ns.singularity.workForFaction(workFac = newWorkFac, "hacking");
+			if (newWorkFac) task(ns, "workf", workFac = newWorkFac, "hacking");
 		}
 	}
 }

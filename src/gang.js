@@ -1,6 +1,7 @@
 /// <reference path="../types.js"/>
 
 import { fn, fn2, mean, selectRandom } from "./util";
+import { task as dotask } from "./utilTask";
 
 const names = [
 	"Aaron,Bernd,Chloe,Dennis,Erika,Fred,Geralt,Hans,Irma,Joseph,Karla,Leni,Moses,Nero,Oslo,Paul,Quaxo,Ramses,Selena,Toby,Ulus,Veronika,Werner,Xenia,Yelena,Zorus"
@@ -83,7 +84,7 @@ var ethical = "";
 export async function main(ns)
 {
 	if (!ns.gang.inGang()) return;
-
+	
 	const memberNames = ns.gang.getMemberNames();
 	for (const name of memberNames)
 		tasks[name] = ns.gang.getMemberInformation(name).task;
@@ -105,7 +106,7 @@ export async function main(ns)
 			const req = calculateAscendTreshold(m.hack_asc_mult);
 			if (res.hack > req)
 			{
-				ns.gang.ascendMember(m.name);
+				dotask(ns, "gascend", m.name);
 				// ns.tprint(`INFO ascended ${m.name} * ${fn(res.hack)} = ${fn(m.hack_asc_mult)}`);
 				Object.assign(m, ns.gang.getMemberInformation(m.name));
 			}
@@ -113,10 +114,10 @@ export async function main(ns)
 			// ns.tprint(m.name + (m.name == ethical ? "*" : "") + ": " + (m.hack >= hackMean) + " " + fn2(m.hack) + "/" + fn2(hackMean) + " " + m.task);
 			if (m.hack > 1e3 && m.hack >= hackMean || m.hack >= 80e3)
 			{
-				if (m.name != ethical) setMemberTask(ns, m.name, crimes[2]);
+				if (m.name != ethical) setMTask(ns, m.name, crimes[2]);
 			}
 			else
-				setMemberTask(ns, m.name, Math.random() < 0.2 ? "Train Combat" : "Train Hacking");
+				setMTask(ns, m.name, Math.random() < 0.2 ? "Train Combat" : "Train Hacking");
 
 			for (const e of [...equipment.AugmentationHack, ...equipment.Rootkit])
 			{
@@ -125,62 +126,33 @@ export async function main(ns)
 				if (cost * 50 < player.money)
 				{
 					// ns.tprint(`purchasing ${e} ${fn2(cost)} for ${m.name}`);
-					ns.gang.purchaseEquipment(m.name, e) || ns.tprint("ERROR buying equipment");
+					dotask(ns, "gequip", m.name, e);
 					player.money -= cost;
 				}
 			}
-
-			let task = ""
-			/*
-			else if (res.hack < 1) task = "Train Hacking"
-			else if (wantedLevel < 0)
-			{
-				/** @type {{crime:String, gain:number}} * /
-				var oktask = null;
-				for (const crime of crimes)
-				{
-					ns.gang.setMemberTask(m.name, crime)
-					const nm = ns.gang.getMemberInformation(m.name);
-					const ok = Math.abs(nm.wantedLevelGain) > 0.001;
-					if (ok && wantedLevel + nm.wantedLevelGain < 0) oktask = { crime, gain: nm.wantedLevelGain }
-				}
-				if (oktask) task = oktask.crime
-			}
-
-			if (!task) task = "Ethical Hacking"
-			
-			if (task != m.task)
-			{
-				ns.gang.setMemberTask(m.name, task)
-				const nm = ns.gang.getMemberInformation(m.name);
-				wantedLevel += nm.wantedLevelGain;
-				ns.tprint(`set ${m.name} task from ${m.task} to ${task} + ${fn(nm.wantedLevelGain)} to ${fn(wantedLevel)}`)
-				if (!ns.args.includes("-s")) ns.gang.setMemberTask(m.name, m.task)
-			} else wantedLevel += m.wantedLevelGain;
-			*/
 		}
 
 		if (!ethical)
 		{
 			const newEthic = selectRandom(memberNames.filter(n => crimes.includes(tasks[n])));
-			if (newEthic && setMemberTask(ns, newEthic, niceThings[0]))
+			if (newEthic && setMTask(ns, newEthic, niceThings[0]))
 				ethical = newEthic;
 		}
 
 		while (ns.gang.canRecruitMember())
 		{
 			const name = selectRandom(names)[memberNames.length];
-			ns.tprint("INFO recruiting " + name)
-			ns.gang.recruitMember(name) || ns.tprint("ERROR recruiting " + name);
+			ns.tprint("INFO recruiting " + name);
+			dotask(ns, "grecruit", name);
 			memberNames.push(name);
-			ns.gang.setMemberTask(name, "Train Hacking");
+			dotask(ns, "gtask", name, "Train Hacking");
 		}
 		await ns.sleep(2000);
 	}
 }
 
-/** @type {(ns: NS, name: string, task?: string) => boolean} */
-function setMemberTask(ns, name, task = null)
+/** @type {(ns: NS, name: string, task?: string) => number} */
+function setMTask(ns, name, task = null)
 {
 	if (name == ethical) ethical = null;
 	if (tasks[name] == task) return;
@@ -188,7 +160,7 @@ function setMemberTask(ns, name, task = null)
 	else if (tasks[name] != task) tasks[name] = task;
 
 	// ns.tprint(`task ${name}: ${task}.`);
-	return ns.gang.setMemberTask(name, task) || ns.tprint("ERROR task failed") || false;
+	return dotask(ns, "gtask", name, task);
 }
 
 // Credit: Mysteyes. https://discord.com/channels/415207508303544321/415207923506216971/940379724214075442
