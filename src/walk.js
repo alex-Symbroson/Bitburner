@@ -1,6 +1,7 @@
 
 /** @typedef {"strength"|"defense"|"agility"|"dexterity"} GymSt */
 
+import { AUG_KARMAS, getNAug } from "./constants";
 import { task } from "./utilTask";
 
 /** @param {NS} ns */
@@ -14,7 +15,6 @@ export async function main(ns)
 	/** @type {(a:GymSt, b:GymSt) => number} */
 	const gymStCmp = (a, b) => p.skills[a] - p.skills[b];
 	const nextGymSt = () => gymSt.sort(gymStCmp)[0];
-	const naug = Number(ns.read('naug.txt'));
 
 	const actions = [
 		new Action(
@@ -31,7 +31,7 @@ export async function main(ns)
 			() => !ns.gang.inGang() && p.money < 15e6,
 			() => task(ns, "crime", "Larceny")),
 		new Action(
-			() => !ns.gang.inGang() && (ns.heart.break() > -([10e3, 20e3, 35e3][naug] || 1e9)),
+			() => !ns.gang.inGang() && (ns.heart.break() > -(AUG_KARMAS[getNAug(ns)] || 1e9)),
 			() => task(ns, "crime", "Homicide")),
 	];
 

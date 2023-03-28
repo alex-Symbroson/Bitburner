@@ -3,6 +3,9 @@ import * as utilx from "./utilx";
 
 /** @type {NS}    */ var ns;
 
+const MONEY_THRES_FAC = 0.9;
+const SEC_THRES_FAC = 1.5;
+
 const minThreads = 128; // minimum thread batch size per server
 const numProc = 32; // maximum procs (thread batches) per server
 const maxSame = 25; // max procs targeting same server+action
@@ -39,12 +42,9 @@ export function slave(host, svList)
 /** @type {(host: Server, ws: {e:Server, w:number}[], t: number, n: number) => number} */
 function enslave(host, ws, threads, n)
 {
-    const moneyThreshFac = 0.9;
-    const secThreashFac = 1.5;
-
     const t = selectWeighted(ws, s => s.w).e;
-    const moneyThresh = t.moneyMax * moneyThreshFac;
-    const secThresh = t.minDifficulty * secThreashFac;
+    const moneyThresh = t.moneyMax * MONEY_THRES_FAC;
+    const secThresh = t.minDifficulty * SEC_THRES_FAC;
 
     /** @type {SAction} */
     var action = "hack"

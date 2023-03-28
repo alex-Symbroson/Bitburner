@@ -84,7 +84,7 @@ export async function main(ns)
             }
 
             var playerCity = player.city; // city
-            var playerLocation = player.location; // location
+            var playerLocation = player.location.replace('University', 'Uni'); // location
             var playerKills = player.numPeopleKilled; // numPeopleKilled
             var playerKarma = ns.heart.break() | 0;
 
@@ -185,12 +185,13 @@ export async function main(ns)
 
             if (extraInfo.purch)
             {
-                const info = extraInfo.purch
-                    .replace(/(\d+) (\d+)/g, '$2<sup>$1</sup>')
-                    .replace(/INFO|\[.*?\]:|,/g, '');
-                hook0.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo_H HUD_el" title="Purchased Servers"><br>Servers &nbsp;&nbsp;&nbsp;</element>`)
+                const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                const info = extraInfo.purch.replace(/INFO | \[.*?\]/g, '').split(': ');
+                info[0] = info[0].replace(/(\d+)/g, (m, n) => alpha[Number(n)]);
+                info[1] = info[1].replace(/(\d+) (\d+),? ?/g, (m, n, s) => `${alpha[Number(s)]}<sup>${n}</sup>`);
+                hook0.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo_H HUD_el" title="Purchased Servers"><br>Servers ${info[0]}&nbsp;</element>`)
                 removeByClassName('.HUD_purchInfo')
-                hook1.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo HUD_el"><br>${info}</element>`)
+                hook1.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo HUD_el"><br>${info[1]}</element>`)
             }
 
             var theme = ns.ui.getTheme()

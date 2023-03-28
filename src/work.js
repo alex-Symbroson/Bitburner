@@ -1,4 +1,5 @@
 /** @typedef {{name:string,favor:number,rep:number}} Fac */
+import { AUGS_GANG, getNAug } from "./constants";
 import { fn2 } from "./util";
 import { task } from "./utilTask";
 
@@ -14,10 +15,9 @@ export async function main(ns)
 	{
 		await ns.asleep(4000);
 		const p = ns.getPlayer();
-		const naugs = Number(ns.read('naug.txt'));
 		const preGangFac = preGangFactions.find(f => p.factions.includes(f));
 		const workFacs = getBestFavorFactions(ns, p);
-		const newWorkFac = (naugs < 3 ? preGangFac : null) || workFacs[0].name;
+		const newWorkFac = (getNAug(ns) < AUGS_GANG ? preGangFac : null) || workFacs[0].name;
 
 		if (newWorkFac && workFac != newWorkFac)
 		{
@@ -31,30 +31,24 @@ export async function main(ns)
 function getBestFavorFactions(ns, p)
 {
 	const gangFaction = ns.gang.getGangInformation()?.faction;
-	/** @type {Fac[]} */
-	const facs = p.factions.map(name => ({
-		name,
-		rep: ns.singularity.getFactionRep(name),
-		favor: ns.singularity.getFactionFavor(name)
-	}));
-	facs.sort((a, b) => b.favor - a.favor);
-	if (facs[0]?.name == gangFaction) facs.shift();
-
-	/** @type {Fac[]} */
-	const workFacs = [];
-
-	for (var f of facs)
-	{
-		if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
-		else if (newFavor(ns, f) < 150) workFacs.push(f);
-		else if (!lstSkip.includes(f.name))
+	return p.factions
+		.map(name => ({
+			name,
+			rep: ns.singularity.getFactionRep(name),
+			favor: ns.singularity.getFactionFavor(name)
+		}))
+		.sort((a, b) => b.favor - a.favor)
+		.filter(f =>
 		{
-			lstSkip.push(f.name);
-			ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
-		}
-	}
-
-	return facs;
+			if (f.name == gangFaction) return false;
+			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
+			else if (newFavor(ns, f) < 150) return true;
+			else if (!lstSkip.includes(f.name))
+			{
+				lstSkip.push(f.name);
+				ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
+			}
+		});
 }
 
 /** @type {(ns:NS,f:Fac)=>number} */

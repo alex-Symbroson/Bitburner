@@ -1,8 +1,10 @@
+import { getNAug, setNAug } from "./constants";
 
 /** @param {NS} ns */
 export async function main(ns)
 {
-    const naug = Number(ns.read('naug.txt'));
-    ns.write('naug.txt', String(naug + 1), "w");
+    ns.toast("INSTALL AUGS...", "warning", 1e4);
+    ns.asleep(1e4);
+    setNAug(ns, getNAug(ns) + 1);
     ns.singularity.installAugmentations("autorun.js");
 }
