@@ -3,5 +3,5 @@
 export async function main(ns)
 {
     // @ts-ignore
-    ns.gang.ascendMember(String(ns.args[0]));
+    ns.gang.recruitMember(String(ns.args[0]));
 }

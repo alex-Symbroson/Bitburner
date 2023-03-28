@@ -49,13 +49,14 @@ export async function main(ns)
     const hook1 = doc.getElementById('overview-extra-hook-1');
 
     var theme = ns.ui.getTheme()
+    /** @type {{[key:string]:string}} */
+    const extraInfo = {};
+    ns.clearPort(20);
 
     while (true)
     {
-
         try
         {
-
             let player = ns.getPlayer();
 
             var gangInfo = null;
@@ -103,6 +104,13 @@ export async function main(ns)
 
             var scriptIncome = ns.formatNumber(cumulative, 2); // $/s
             var scriptXP = ns.formatNumber(ns.getTotalScriptExpGain(), 2); // xp/s
+
+            var buf = '';
+            while((buf = String(ns.readPort(20))) != 'NULL PORT DATA')
+            {
+                const [key, data] = buf.split('§');
+                extraInfo[key] = data;
+            }
 
             // End paramaters, begin CSS: 
 
@@ -174,6 +182,16 @@ export async function main(ns)
             removeByClassName('.HUD_Kills')
             hook1.insertAdjacentHTML('beforeend', `<element class="HUD_Kills HUD_el"><br>${playerKills}</element>`)
             colorByClassName(".HUD_Kills", theme['hp'])
+
+            if (extraInfo.purch)
+            {
+                const info = extraInfo.purch
+                    .replace(/(\d+) (\d+)/g, '$2<sup>$1</sup>')
+                    .replace(/INFO|\[.*?\]:|,/g, '');
+                hook0.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo_H HUD_el" title="Purchased Servers"><br>Servers &nbsp;&nbsp;&nbsp;</element>`)
+                removeByClassName('.HUD_purchInfo')
+                hook1.insertAdjacentHTML('beforeend', `<element class="HUD_purchInfo HUD_el"><br>${info}</element>`)
+            }
 
             var theme = ns.ui.getTheme()
 

@@ -4,6 +4,8 @@ import { task } from "./utilTask";
 
 var lstSkip = /** @type {string[]} */ ([]);
 
+const preGangFactions = ["CyberSec", "NiteSec"];
+
 /** @param {NS} ns */
 export async function main(ns)
 {
@@ -11,50 +13,48 @@ export async function main(ns)
 	while (1)
 	{
 		await ns.asleep(4000);
-
 		const p = ns.getPlayer();
-		/** @type {Fac[]} */
-		const facs = p.factions.map(name => ({
-			name,
-			rep: ns.singularity.getFactionRep(name),
-			favor: ns.singularity.getFactionFavor(name)
-		}));
-		facs.sort((a, b) => b.favor - a.favor);
-		try
-		{
-			if (facs[0].name == ns.gang.getGangInformation().faction) facs.shift();
-		} catch (e) { }
+		const naugs = Number(ns.read('naug.txt'));
+		const preGangFac = preGangFactions.find(f => p.factions.includes(f));
+		const workFacs = getBestFavorFactions(ns, p);
+		const newWorkFac = (naugs < 3 ? preGangFac : null) || workFacs[0].name;
 
-		/** @type {Fac[]} */
-		const workFacs = [];
-
-		for (var f of facs)
-		{
-			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
-			else if (newFavor(ns, f) < 150) workFacs.push(f);
-			else if (!lstSkip.includes(f.name))
-			{
-				lstSkip.push(f.name);
-				ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
-			}
-		}
-
-		var newWorkFac = ns.read("workFac.txt");
-		const wf = workFacs[0];
-		if (!workFacs.find(f => f.name == newWorkFac) || wf.favor > 100)
-		{
-			if (workFac != wf.name) ns.tprint(`WARN skip suggested workFac ${newWorkFac} for ${wf.name}:${wf.favor}`)
-			newWorkFac = wf.name;
-		}
-
-		// if (p.factions.includes("Daedalus")) newWorkFac = "Daedalus";
-		//ns.tprint(newWorkFac + ': ' + facs.map(f => f.name))
 		if (newWorkFac && workFac != newWorkFac)
 		{
 			ns.tprint("WARN working for " + newWorkFac);
-			if (newWorkFac) task(ns, "workf", workFac = newWorkFac, "hacking");
+			task(ns, "workf", workFac = newWorkFac, "hacking");
 		}
 	}
+}
+
+/** @type {(ns:NS, p:Player) => Fac[]} */
+function getBestFavorFactions(ns, p)
+{
+	const gangFaction = ns.gang.getGangInformation()?.faction;
+	/** @type {Fac[]} */
+	const facs = p.factions.map(name => ({
+		name,
+		rep: ns.singularity.getFactionRep(name),
+		favor: ns.singularity.getFactionFavor(name)
+	}));
+	facs.sort((a, b) => b.favor - a.favor);
+	if (facs[0]?.name == gangFaction) facs.shift();
+
+	/** @type {Fac[]} */
+	const workFacs = [];
+
+	for (var f of facs)
+	{
+		if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
+		else if (newFavor(ns, f) < 150) workFacs.push(f);
+		else if (!lstSkip.includes(f.name))
+		{
+			lstSkip.push(f.name);
+			ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
+		}
+	}
+
+	return facs;
 }
 
 /** @type {(ns:NS,f:Fac)=>number} */

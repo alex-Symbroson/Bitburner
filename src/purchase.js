@@ -103,9 +103,11 @@ function printCount(ns, servers, ramLvl, newserv = '')
     const counts = /** @type {{[x:string]: number}} */ ({});
     if (newserv) newserv += `  (${tPurch.next()}s)`;
     servers.map(s => s.maxRam).forEach(s => counts[s] = (counts[s] || 0) + 1)
-    ns.tprint(
+    const info =
         `INFO ${servers.length}/${data.srvLimit} [${fn2(ns.getPurchasedServerCost(1 << ramLvl))}]: ` +
-        Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ") + newserv);
+        Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ");
+    ns.tprint(info + newserv);
+    ns.writePort(20, 'purch§' + info);
 }
 
 /** @type {(ns:NS, n:number) => string} */

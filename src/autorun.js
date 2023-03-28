@@ -33,20 +33,20 @@ export async function main(_ns)
     hack.init(ns = _ns);
 
     // flush port
-    while (ns.readPort(1) != "NULL PORT DATA");
+    ns.clearPort(1);
     autoScript(ns, "t_connect home", () => true)();
     await ns.asleep(0.1);
 
     const autoTor = autoScript(ns, 'tor', () => homeRam >= 64 && !ns.fileExists('SQLInject.exe'));
     const autoGang = autoScript(ns, 'gang', () => ns.heart.break() < -54e3);
     const autoClear = autoScript(ns, 'clear', () => true);
-    const autoHome = autoScript(ns, 'home', () => p.money > 5e6);
+    const autoHome = autoScript(ns, 'home', () => homeRam > 64 || p.money > 5e6);
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
 
     const autoWalk = autoScript(ns, 'walk', () => true);
     const autoPurch = autoScript(ns, 'purchase -d', () => homeRam >= 64 && !ns.args.includes('-P'));
     const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
-    const autoAug = autoScript(ns, 'augments -c', () => homeRam >= 1 << 10 || p.factions.includes("CyberSec"));
+    const autoAug = autoScript(ns, 'augments -c', () => p.factions.length > 4);
     const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
     autoWalk();

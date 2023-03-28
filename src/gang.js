@@ -97,7 +97,7 @@ export async function main(ns)
 			dotask(ns, "grecruit", name);
 			await ns.sleep(100);
 			memberNames.push(name);
-			dotask(ns, "gtask", name, "Train Hacking");
+			ns.gang.setMemberTask(name, "Train Hacking");
 		}
 		await ns.sleep(1000);
 	}
