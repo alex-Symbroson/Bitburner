@@ -30,6 +30,7 @@ export async function main(ns)
 /** @type {(ns:NS, p:Player) => Fac[]} */
 function getBestFavorFactions(ns, p)
 {
+	const donateFavor = ns.getFavorToDonate();
 	const gangFaction = ns.gang.getGangInformation()?.faction;
 	return p.factions
 		.map(name => ({
@@ -41,13 +42,20 @@ function getBestFavorFactions(ns, p)
 		.filter(f =>
 		{
 			if (f.name == gangFaction) return false;
-			if (f.favor >= 150) ns.singularity.donateToFaction(f.name, p.money / 400);
-			else if (newFavor(ns, f) < 150) return true;
+			if (f.favor >= donateFavor)
+			{
+				if (f.name == "Daedalus" && ns.singularity.getFactionRep(gangFaction) < 2e6)
+					ns.singularity.donateToFaction(f.name, p.money / 10);
+				else
+					ns.singularity.donateToFaction(f.name, p.money / 400);
+			}
+			else if (newFavor(ns, f) < donateFavor) return true;
 			else if (!lstSkip.includes(f.name))
 			{
 				lstSkip.push(f.name);
 				ns.tprint(`WARN skipped ${f.name}: ${f.favor | 0} -> ${newFavor(ns, f) | 0} (${fn2(f.rep)})`);
 			}
+			return f.name == "Daedalus";
 		});
 }
 
