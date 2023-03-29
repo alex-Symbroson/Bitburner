@@ -25,5 +25,4 @@ export async function main(ns)
 			else task(ns, "gcreate", "Slum Snakes");
 		}
 	}
-	ns.singularity.destroyW0r1dD43m0n
 }
