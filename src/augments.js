@@ -54,6 +54,7 @@ function check(ns, auto = null)
 
     /** @type {{[x:string]:Aug}} */
     const buyAugs = {};
+    const allAugs = /** @type {Aug[]} */([]);
     const installedAugs = ns.singularity.getOwnedAugmentations();
     const ownedAugs = ns.singularity.getOwnedAugmentations(true);
     const purchased = ownedAugs.length - installedAugs.length;
@@ -65,8 +66,13 @@ function check(ns, auto = null)
         {
             const aug = getAugmentation(ns, f, a, purchased);
             if (a == NFG || !ownedAugs.includes(a))
-                if ((allow.includes(a) || aug.stats.length) && aug.rep <= f.rep)
-                    buyAugs[a] = aug;
+            {
+                if (allow.includes(a) || aug.stats.length)
+                {
+                    if (a != NFG) allAugs.push(aug);
+                    if (aug.rep <= f.rep) buyAugs[a] = aug;
+                }
+            }
         }
     }
 
@@ -74,17 +80,21 @@ function check(ns, auto = null)
     delete buyAugs[NFG];
 
     const lstAugs = Object.values(buyAugs).sort((a, b) => a.price - b.price);
-
     let ai = lstAugs.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
     if (ai == -1) ai = lstAugs.length == 0 ? 0 : (costSum(lstAugs) > p.money ? 0 : lstAugs.length);
 
     const nfgPrice = ns.singularity.getAugmentationPrice(NFG);
-    /** @type {(i:number) => Aug} */ 
+    /** @type {(i:number) => Aug} */
     const getNfg = i => ({ ...nfg, name: NFG, price: nfgPrice * (AUG_MULT * NFG_MULT) ** i });
     const lstNfg = new Array(30).fill(0).map((n, i) => getNfg(i));
-    
+
     const ni = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1)) > p.money);
     const ani = lstNfg.findIndex((a, i, l) => costSum(l.slice(0, i + 1), ai) > p.money);
+
+    const ags = [0, 1].map(n => costSum(lstAugs.slice(0, ai + n)));
+    const ans = [0, 1].map((n, i) => costSum(lstNfg.slice(0, ani + n), ai));
+    const ngs = [0, 1].map(n => costSum(lstNfg.slice(0, ni + n)));
+    ns.writePort(20, `augs§${allAugs.length}:${ai} +${ani} ${fn2(Math.max(...ags, ...ngs), 1)}`);
 
     if (auto && purchased + ai + ani < 5) return;
 
@@ -95,41 +105,45 @@ function check(ns, auto = null)
             ns.tprint(lstAugs.slice(0, ai + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.fac.name}) ${"*".slice(Number(i < ai))}${a.name}`, fn2(a.price), a.stats)).join(''));
             ns.tprint(lstNfg.slice(0, ni + 10).map((a, i) => ns.sprintf(`\n%5s: %8s  (${a.fac?.name}) ${"*".slice(Number(i < ni))}${a.name}`, fn2(a.price), a.stats)).join(''));
         }
-        const ags = [0, 1].map(n => fn2(costSum(lstAugs.slice(0, ai + n)), 1));
-        const ans = [0, 1].map((n, i) => fn2(costSum(lstNfg.slice(0, ani + n), ai), 1));
-        const ngs = [0, 1].map(n => fn2(costSum(lstNfg.slice(0, ni + n)), 1));
-        ns.tprint(`${ai} Augs ${ags.join(' ')}    + ${ani} NFG ${ans.join(' ')}    ${ni} NeuroFlux ${ngs.join(' ')}`);
+        ns.tprint(`${ai} Augs ${ags.map(n => fn2(n, 1)).join(' ')}` +
+            `    + ${ani} NFG ${ans.map(n => fn2(n, 1)).join(' ')}` +
+            `    ${ni} NeuroFlux ${ngs.map(n => fn2(n, 1)).join(' ')}`);
     }
 
-    var sum = 0;
-    const hasEnoughAugs = () => ani > (getNAug(ns) < AUGS_GANG ? AUGS_PREGANG : AUGS_POSTGANG);
+    var tn = 0, nn = 0;
+    const hasEnoughAugs = () => purchased + ai >=
+        (getNAug(ns) < AUGS_GANG ? AUGS_PREGANG : Math.min(allAugs.length - 8, AUGS_POSTGANG));
+
     if (ns.args.includes('-p') || ("an".includes(auto) && hasEnoughAugs() && checkInstall(ns, purchased + ai + ani)))
     {
         if (!auto) auto = String(ns.args[1 + ns.args.indexOf('-p')]);
 
-        var tn = 0, nn = 0;
         if (auto != 'n')
             for (const a of lstAugs.slice(0, ai).reverse())
+            {
+                for (const b of ns.singularity.getAugmentationPrereq(a.name))
+                {
+                    if (ns.singularity.purchaseAugmentation(a.fac.name, b))
+                        ns.tprint("purchased prereq " + b), tn++;
+                }
                 if (ns.singularity.purchaseAugmentation(a.fac.name, a.name)) tn++;
-                else break;
+            }
 
         if (nfg && auto != 'a')
             for (const a of lstNfg.slice(0, ni))
                 if (ns.singularity.purchaseAugmentation(a.fac.name, a.name)) nn++;
-                else break;
 
-        sum = tn + nn;
-        ns.tprint(`purchased ${tn} Augs and ${nn} NeuroFlux`);
+        if (tn + nn) ns.tprint(`purchased ${tn} Augs and ${nn} NeuroFlux`);
     }
 
     if (ns.args.includes('-R') || (auto == "R" && checkInstall(ns)))
     {
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
-        task(ns, "installAugs");
+        task(ns, "installAugs", ns.args.includes('-R') ? "" : "-d");
     }
 
-    return sum;
+    return tn + nn;
 }
 
 /** @type {(ns:NS, n?:number) => boolean} */

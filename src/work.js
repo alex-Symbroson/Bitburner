@@ -17,7 +17,7 @@ export async function main(ns)
 		const p = ns.getPlayer();
 		const preGangFac = preGangFactions.find(f => p.factions.includes(f));
 		const workFacs = getBestFavorFactions(ns, p);
-		const newWorkFac = (getNAug(ns) < AUGS_GANG ? preGangFac : null) || workFacs[0].name;
+		const newWorkFac = (getNAug(ns) < AUGS_GANG ? preGangFac : null) || workFacs[0]?.name;
 
 		if (newWorkFac && workFac != newWorkFac)
 		{
