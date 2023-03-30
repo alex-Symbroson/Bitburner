@@ -5,7 +5,7 @@ import { task } from "./utilTask";
 
 var lstSkip = /** @type {string[]} */ ([]);
 
-const preGangFactions = ["CyberSec", "NiteSec"];
+const preGangFactions = ["NiteSec", "CyberSec"];
 
 /** @param {NS} ns */
 export async function main(ns)
@@ -31,7 +31,9 @@ export async function main(ns)
 function getBestFavorFactions(ns, p)
 {
 	const donateFavor = ns.getFavorToDonate();
-	const gangFaction = ns.gang.getGangInformation()?.faction;
+	var gangFaction = '';
+	try { gangFaction = ns.gang.getGangInformation().faction; }
+	catch(e) {}
 	return p.factions
 		.map(name => ({
 			name,

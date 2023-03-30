@@ -35,9 +35,8 @@ export async function main(ns)
     }
 
     var theme = ns.ui.getTheme()
-    /** @type {{[key:string]:string}} */
+    /** @type {{[key:string]:string[]}} */
     const extraInfo = {};
-    ns.clearPort(20);
 
     while (true)
     {
@@ -45,6 +44,7 @@ export async function main(ns)
         {
             let player = ns.getPlayer();
 
+            /** @type {import("../Bitburner.t").GangGenInfo} */
             var gangInfo = null;
             var gangFaction = "";
             var gangIncome = "";
@@ -53,20 +53,14 @@ export async function main(ns)
             let gangAPI = false;
             try
             {
-                if (ns.gang.getGangInformation() != null)
-                {
-                    gangAPI = true;
-                }
-            } catch {
-                ns.print("gangAPI: " + false);
-            }
-
-            if (gangAPI != false)
-            {
                 gangInfo = ns.gang.getGangInformation();
+                gangAPI = gangInfo != null;
                 gangFaction = gangInfo.faction;
                 gangIncome = ns.formatNumber(gangInfo.moneyGainRate * 5, 1);  // A tick is every 200ms. To get the actual money/s, multiple moneyGainRate by 5.
                 gangRespect = ns.formatNumber(gangInfo.respect, 1) + ' &nbsp;';
+            }
+            catch {
+                ns.print("gangAPI: " + gangAPI);
             }
 
             var playerCity = player.city; // city
@@ -91,12 +85,19 @@ export async function main(ns)
             var scriptIncome = ns.formatNumber(cumulative, 2); // $/s
             var scriptXP = ns.formatNumber(ns.getTotalScriptExpGain(), 2); // xp/s
 
+            // Extra info from Port 20
+
             var buf = '';
             while ((buf = String(ns.readPort(20))) != 'NULL PORT DATA')
             {
-                const [key, data] = buf.split('§');
+                const [key, ...data] = buf.split('§');
                 extraInfo[key] = data;
             }
+
+            const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            const purchTitle = extraInfo.purch[0]?.replace(/INFO | \[.*?\]/g, '').replace(/(\d+)/g, (m, n) => alpha[Number(n)]);
+            const purchValue = extraInfo.purch[1]?.replace(/(\d+) (\d+),? ?/g, (m, n, s) => alpha[Number(s)] + (n > 1 ? `<sup>${n}</sup>` : ''));
+            const augsTitle = extraInfo.augs[0]?.replace(/^(\d+):/g, '<sup>$1</sup> ')
 
             // End paramaters, begin CSS: 
 
@@ -118,27 +119,12 @@ export async function main(ns)
             }
 
             addElement("ScrInc", "$" + scriptIncome + '/s', 'money', "Money Gain from Scripts per Second.")
-
             addElement("ScrExp", scriptXP + '/s', 'money', "XP Gain from Scripts per Second.")
-
             addElement("Karma", playerKarma, "hp", "Your karma.")
-
             addElement("Kills", playerKills, "hp", "Your kill count, increases every successful homicide.")
 
-            if (extraInfo.purch)
-            {
-                const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                const info = extraInfo.purch.replace(/INFO | \[.*?\]/g, '').split(': ');
-                info[0] = info[0].replace(/(\d+)/g, (m, n) => alpha[Number(n)]);
-                info[1] = info[1].replace(/(\d+) (\d+),? ?/g, (m, n, s) => alpha[Number(s)] + (n > 1 ? `<sup>${n}</sup>` : ''));
-                addElement(`Srv ${info[0]}`, info[1], "secondary", "Purchased Servers")
-            }
-
-            if (extraInfo.augs)
-            {
-                const info = extraInfo.augs.split(':');
-                addElement('Augs ' + info[0], info[1], "secondary", "Next Augmentations")
-            }
+            if (extraInfo.purch) addElement(`Srv ${purchTitle}`, purchValue, "secondary", "Purchased Servers")
+            if (extraInfo.augs) addElement('Augs' + augsTitle, extraInfo.augs[1], "secondary", "Next Augmentations")
 
             var theme = ns.ui.getTheme()
 

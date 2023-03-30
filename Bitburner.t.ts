@@ -694,7 +694,7 @@ interface BladeburnerCurAction {
  * Gang general info.
  * @public
  */
-interface GangGenInfo {
+export interface GangGenInfo {
   /** Name of faction that the gang belongs to ("Slum Snakes", etc.) */
   faction: string;
   /** Indicating whether or not it's a hacking gang */

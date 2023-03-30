@@ -107,7 +107,7 @@ function printCount(ns, servers, ramLvl, newserv = '')
         `INFO ${servers.length}/${data.srvLimit} [${fn2(ns.getPurchasedServerCost(1 << ramLvl))}]: ` +
         Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ");
     ns.tprint(info + newserv);
-    ns.writePort(20, 'purch§' + info);
+    ns.writePort(20, 'purch§' + info.replace(': ', '§'));
 }
 
 /** @type {(ns:NS, n:number) => string} */
