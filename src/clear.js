@@ -1,15 +1,18 @@
+// for i in t_*; do i=${i/.js/}; echo "${i/t_/}"; grep -nE "\"${i/t_/}\"" *; done
+
 /** @param {NS} ns */
 export async function main(ns)
 {
     const spat = ns.args.filter(s => String(s)[0] != '-')[0]
     const pat = RegExp(spat ? String(ns.args[0]) : ".*")
     const srvs = scanServerNames(ns).slice(1).filter(s => pat.test(s) && ns.hasRootAccess(s));
-    for (const s of srvs)
+
+    if (ns.args.includes("-f")) rmall(ns, "home");
+    else for (const s of srvs)
     {
         if (!ns.args.length || ns.args.includes("-k")) ns.killall(s);
         if (!ns.args.length || ns.args.includes("-x")) clear(ns, s);
         if (!ns.args.length || ns.args.includes("-c")) copy(ns, s);
-        if (ns.args.includes("-f")) rmall(ns, s);
         await ns.sleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)
@@ -48,5 +51,6 @@ export function copy(ns, s)
 /** @type {(ns:NS, s:string) => void} */
 export function rmall(ns, s)
 {
-    for (var f of ns.ls(s, ".js")) ns.rm(f);
+    ns.tprint(ns.ls(s, ".js"));
+    for (var f of ns.ls(s, ".js")) ns.rm(f) && ns.tprint("deleted " + f);
 }

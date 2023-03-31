@@ -94,7 +94,7 @@ function check(ns, auto = null)
     const ags = [0, 1].map(n => costSum(lstAugs.slice(0, ai + n)));
     const ans = [0, 1].map((n, i) => costSum(lstNfg.slice(0, ani + n), ai));
     const ngs = [0, 1].map(n => costSum(lstNfg.slice(0, ni + n)));
-    ns.writePort(20, `augs§${getNAug(ns)}:${allAugs.length}§${ai} +${ani} ${fn2(Math.max(...ags, ...ngs), 1)}`);
+    ns.writePort(20, `augs§${getNAug(ns)}:${allAugs.length}§${ai} +${ani} <sub>${fn2(Math.max(...ags, ...ngs), 1)}</sub>`);
 
     if (auto && purchased + ai + ani < 5) return;
 

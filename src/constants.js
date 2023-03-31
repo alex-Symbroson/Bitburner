@@ -1,5 +1,5 @@
 
-export const AUG_KARMAS = [10e3, 20e3, 35e3];
+export const AUG_KARMAS = [10e3, 20e3, 30e3, 40e3];
 export const AUGS_GANG = AUG_KARMAS.length;
 
 /** @param {NS} ns */

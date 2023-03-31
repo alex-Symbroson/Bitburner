@@ -35,8 +35,8 @@ export async function main(ns)
     }
 
     var theme = ns.ui.getTheme()
-    /** @type {{[key:string]:string[]}} */
-    const extraInfo = {};
+    /** @type {{[key:string]:string[]}} */ // @ts-ignore
+    const extraInfo = { purch: "", augs: "" };
 
     while (true)
     {
@@ -95,9 +95,9 @@ export async function main(ns)
             }
 
             const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            const purchTitle = extraInfo.purch[0]?.replace(/INFO | \[.*?\]/g, '').replace(/(\d+)/g, (m, n) => alpha[Number(n)]);
+            const purchTitle = extraInfo.purch[0]?.replace(/INFO (\S+) \[(\S+)\]/g, '<sup>$1</sup><sub>$2</sub>').replace(/(\d+)(?=[/<])/g, (m, n) => alpha[Number(n)]);
             const purchValue = extraInfo.purch[1]?.replace(/(\d+) (\d+),? ?/g, (m, n, s) => alpha[Number(s)] + (n > 1 ? `<sup>${n}</sup>` : ''));
-            const augsTitle = extraInfo.augs[0]?.replace(/^(\d+):/g, '<sup>$1</sup> ')
+            const augsTitle = extraInfo.augs[0]?.replace(/^(\d+):(\d+)/g, '<sup>$1</sup><sub>$2</sub>')
 
             // End paramaters, begin CSS: 
 
@@ -123,14 +123,16 @@ export async function main(ns)
             addElement("Karma", playerKarma, "hp", "Your karma.")
             addElement("Kills", playerKills, "hp", "Your kill count, increases every successful homicide.")
 
-            if (extraInfo.purch) addElement(`Srv ${purchTitle}`, purchValue, "secondary", "Purchased Servers")
+            if (extraInfo.purch) addElement(`Srv${purchTitle}`, purchValue, "secondary", "Purchased Servers")
             if (extraInfo.augs) addElement('Augs' + augsTitle, extraInfo.augs[1], "secondary", "Next Augmentations")
 
             var theme = ns.ui.getTheme()
 
-        } catch (err)
+        }
+        catch (err)
         {
-            ns.print("ERROR: Update Skipped: " + String(err));
+            ns.tprint("ERROR: Update Skipped: " + String(err.stack));
+            await ns.asleep(10e3);
         }
 
         ns.atExit(function () { removeByClassName('.HUD_el'); })
