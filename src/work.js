@@ -1,5 +1,4 @@
 /** @typedef {{name:string,favor:number,rep:number}} Fac */
-import { AUGS_GANG, getNAug } from "./constants";
 import { fn2 } from "./util";
 import { task } from "./utilTask";
 
@@ -17,7 +16,7 @@ export async function main(ns)
 		const p = ns.getPlayer();
 		const preGangFac = preGangFactions.find(f => p.factions.includes(f));
 		const workFacs = getBestFavorFactions(ns, p);
-		const newWorkFac = (getNAug(ns) < AUGS_GANG ? preGangFac : null) || workFacs[0]?.name;
+		const newWorkFac = (ns.heart.break() > -54e3 ? preGangFac : null) || workFacs[0]?.name;
 
 		if (newWorkFac && workFac != newWorkFac)
 		{

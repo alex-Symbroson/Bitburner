@@ -1,7 +1,7 @@
 
 /** @typedef {"strength"|"defense"|"agility"|"dexterity"} GymSt */
 
-import { AUG_KARMAS, getNAug } from "./constants";
+import { KARMA_DELTA } from "./constants";
 import { task } from "./utilTask";
 
 /** @param {NS} ns */
@@ -9,6 +9,7 @@ export async function main(ns)
 {
 	var p = ns.getPlayer();
 	var tCur = 0;
+	const augKarma = Number(ns.read('karma.txt'));
 
 	/** @type {GymSt[]} */
 	const gymSt = ["strength", "defense", "agility", "dexterity"];
@@ -31,7 +32,7 @@ export async function main(ns)
 			() => !ns.gang.inGang() && p.money < 15e6,
 			() => task(ns, "crime", "Larceny")),
 		new Action(
-			() => !ns.gang.inGang() && (ns.heart.break() > -(AUG_KARMAS[getNAug(ns)] || 1e9)),
+			() => !ns.gang.inGang() && (ns.heart.break() > augKarma - KARMA_DELTA),
 			() => task(ns, "crime", "Homicide")),
 	];
 

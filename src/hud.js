@@ -64,7 +64,10 @@ export async function main(ns)
             }
 
             var playerCity = player.city; // city
-            var playerLocation = player.location.replace('University', 'Uni'); // location
+            var playerLocation = player.location
+                .replace(/Enterprises?/, 'Ent')
+                .replace('Corporation', 'Corp')
+                .replace('University', 'Uni'); // location
             var playerKills = player.numPeopleKilled; // numPeopleKilled
             var playerKarma = ns.heart.break() | 0;
 
@@ -100,6 +103,7 @@ export async function main(ns)
             const augsTitle = extraInfo.augs[0]?.replace(/^(\d+):(\d+)/g, '<sup>$1</sup><sub>$2</sub>')
 
             // End paramaters, begin CSS: 
+            const supb = '<sup></sup><sub></sub>';
 
             removeByClassName('.HUD_el');
             var theme = ns.ui.getTheme();
@@ -123,8 +127,8 @@ export async function main(ns)
             addElement("Karma", playerKarma, "hp", "Your karma.")
             addElement("Kills", playerKills, "hp", "Your kill count, increases every successful homicide.")
 
-            if (extraInfo.purch) addElement(`Srv${purchTitle}`, purchValue, "secondary", "Purchased Servers")
-            if (extraInfo.augs) addElement('Augs' + augsTitle, extraInfo.augs[1], "secondary", "Next Augmentations")
+            if (extraInfo.purch) addElement(`Srv${purchTitle}` + supb, purchValue + supb, "secondary", "Purchased Servers")
+            if (extraInfo.augs) addElement('Augs' + augsTitle + supb, extraInfo.augs[1] + supb, "secondary", "Next Augmentations")
 
             var theme = ns.ui.getTheme()
 

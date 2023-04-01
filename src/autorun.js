@@ -53,9 +53,9 @@ export async function main(_ns)
 
     for (var i = 0; ; i++)
     {
-        if (i % 2 == 0) while (handleMsg(String(ns.readPort(1))));
+        if (i % 2 == 0) while (handleMsg(ns, String(ns.readPort(1))));
         if (i % 20 == 0) await checkNewServers();
-        if (i % 2 == 0) await enslaveServers();
+        if (i % 2 == 0 && !ns.args.includes('-S')) await enslaveServers();
 
         if (errsPerSec > 0 && --errsPerSec > 10)
             errsPerSec = i % 10 / 2 | 0, autoClear();
@@ -103,15 +103,8 @@ function autoScript(ns, name, cond)
     }
 }
 
-const tasks = [];
-/** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => void)} */
-function autoTask(ns, name, cond)
-{
-    return (...a) => cond(...a) && tasks.push(() => ns.exec(name + '.js', 'home', 1));
-}
-
-/** @param {string} s */
-function handleMsg(s)
+/** @type {(ns:NS, s:string) => boolean} */
+function handleMsg(ns, s)
 {
     if (s == "NULL PORT DATA") return false;
 
@@ -122,15 +115,15 @@ function handleMsg(s)
             srvd.rmServer(m[1]);
             ns.writePort(2, "registered");
             break;
-        case "sa": registerMiner(m[1]); break;
+        case "sa": registerMiner(ns, m[1]); break;
         default: throw Error(`unhadled msg cmd '${m[1]}`);
     }
 
     return true;
 }
 
-/** @param {string} s */
-function registerMiner(s)
+/** @type {(ns:NS, s:string) => void} */
+function registerMiner(ns, s)
 {
     copy(ns, s);
     srvd.addServer(s);

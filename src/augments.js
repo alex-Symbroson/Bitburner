@@ -1,5 +1,5 @@
 
-import { AUGS_GANG, clearFlag, getNAug, setFlag, setNAug } from './constants';
+import { clearFlag, getNAug, setFlag, setNAug } from './constants';
 import { fn, fn2 } from './util'
 import { task } from './utilTask';
 
@@ -112,7 +112,7 @@ function check(ns, auto = null)
 
     var tn = 0, nn = 0;
     const hasEnoughAugs = () => purchased + ai >=
-        (getNAug(ns) < AUGS_GANG ? AUGS_PREGANG : Math.min(allAugs.length - 8, AUGS_POSTGANG));
+        (ns.heart.break() > -54e3 ? AUGS_PREGANG : Math.min(allAugs.length - 8, AUGS_POSTGANG));
 
     if (ns.args.includes('-p') || ("an".includes(auto) && hasEnoughAugs() && checkInstall(ns, purchased + ai + ani)))
     {
@@ -141,6 +141,7 @@ function check(ns, auto = null)
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
         clearFlag(ns, 'P');
+        ns.write('karma.txt', String(ns.heart.break()));
         task(ns, "installAugs", ns.args.includes('-R') ? "" : "-d");
     }
 

@@ -1,6 +1,5 @@
 
-export const AUG_KARMAS = [10e3, 20e3, 30e3, 40e3];
-export const AUGS_GANG = AUG_KARMAS.length;
+export const KARMA_DELTA = 12e3;
 
 const fNAug = 'naug.txt';
 const fFlag = 'flags.txt';
