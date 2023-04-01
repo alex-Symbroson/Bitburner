@@ -44,13 +44,12 @@ export async function main(_ns)
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && ns.heart.break() < -54e3);
 
     const autoWalk = autoScript(ns, 'walk', () => true);
-    const autoPurch = autoScript(ns, 'purchase -d', () => homeRam >= 64 && !ns.args.includes('-P'));
+    const autoPurch = autoScript(ns, 'purchase -d -s', () => homeRam >= 64 && !ns.args.includes('-P'));
     const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
     const autoAug = autoScript(ns, 'augments -c', () => p.factions.length > 4);
     const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
     autoWalk();
-    autoPurch();
 
     for (var i = 0; ; i++)
     {
@@ -70,12 +69,13 @@ export async function main(_ns)
 
             autoHome();
             autoTor();
+            autoPurch();
             if (p.factions.length > 0) autoGang();
             autoHud();
         }
 
         if (i % 97 == 0) autoAug();
-        if (i % 506 == 0) autoDestroy();
+        if (i % 107 == 0) autoDestroy();
 
         await ns.asleep(1000);
     }

@@ -1,5 +1,5 @@
 
-import { AUGS_GANG, getNAug, setNAug } from './constants';
+import { AUGS_GANG, clearFlag, getNAug, setFlag, setNAug } from './constants';
 import { fn, fn2 } from './util'
 import { task } from './utilTask';
 
@@ -140,6 +140,7 @@ function check(ns, auto = null)
     {
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
+        clearFlag(ns, 'P');
         task(ns, "installAugs", ns.args.includes('-R') ? "" : "-d");
     }
 
@@ -152,7 +153,8 @@ function checkInstall(ns, n = null)
     const no = ns.singularity.getOwnedAugmentations().length;
     if (n === null) n = ns.singularity.getOwnedAugmentations(true).length - no;
     const thres = no < 40 ? AUGS_PREGANG_TOTAL : AUGS_POSTGANG_TOTAL;
-    if (n >= thres - AUGS_KILL_PURCHASE) ns.kill('purchase.js', 'home', '-d') && ns.tprint('killed purchase.js');
+    if (n >= thres - AUGS_KILL_PURCHASE) setFlag(ns, 'P');
+    else clearFlag(ns, 'P');
     return n >= thres;
 }
 
