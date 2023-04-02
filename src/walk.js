@@ -57,8 +57,8 @@ export async function main(ns)
 		}
 		else action.repeat();
 	}
-	ns.tprint("walk done. spawning work");
-	task(ns, "run", "work.js");
+	ns.tprint("done. spawning work");
+	task(ns, "spawn", "work.js");
 }
 
 const nop = () => { };

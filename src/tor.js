@@ -16,9 +16,9 @@ export async function main(ns)
 	];
 
 	while (!ns.singularity.purchaseTor()) ns.sleep(5e3);
-	ns.tprint('purchased tor');
+	ns.tprint('purchased tor router');
 
-	if (!ns.args.includes('t')) items.pop();
+	if (!ns.args.includes('-t')) items.pop();
 
 	while (items.length)
 	{

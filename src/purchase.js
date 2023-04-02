@@ -48,13 +48,13 @@ async function daemon(ns)
         if (!ns.args.length) return;
         printCount(ns, counts, ramLvl);
 
-        if (ramLvl > 16 || counts[1 << 16] > 1) setFlag(ns, 'HGW');
+        if (ramLvl > 16 || counts[1 << 15] > 1) setFlag(ns, 'HGW');
         else clearFlag(ns, 'HGW');
     }
 
     // update ramLvl to greatest purchased server
     if (servers.length > 0) ramLvl = logn(servers[servers.length - 1].maxRam, 2);
-    if (ramLvl > 16 || counts[1 << 16] > 1) setFlag(ns, 'HGW');
+    if (ramLvl > 16 || counts[1 << 15] > 1) setFlag(ns, 'HGW');
     else clearFlag(ns, 'HGW');
 
     // general info

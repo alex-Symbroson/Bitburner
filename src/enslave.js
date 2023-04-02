@@ -4,6 +4,7 @@ import * as utilx from "./utilx";
 import * as hack from "./hack";
 import * as srvd from "./serverData";
 import { copy } from "./clear";
+import { getFlag } from "./constants";
 
 /** @type {NS}    */ var ns;
 
@@ -36,14 +37,15 @@ export async function main(ns)
 
 async function enslaveServers()
 {
-    stats.idle = 0
-    const svList = srvd.getServers(s => s.hasAdminRights)
+    stats.idle = 0;
+    const svList = srvd.getServers(s => s.hasAdminRights);
 
     for (const s of svList)
     {
+        if (getFlag(ns, 'HGW') && s.maxRam >= 1 << 15) continue;
         try { srvd.addServer(s.hostname); }
         catch (e) { continue; }
-        if (s.maxRam - s.ramUsed < hackSlave.ram) continue
+        if (s.maxRam - s.ramUsed < hackSlave.ram) continue;
         slave(s, svList);
         await ns.sleep(10);
     }

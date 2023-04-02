@@ -18,7 +18,7 @@ export async function main(ns)
 
     if (ns.args.includes('-i'))
     {
-        ns.tprint(`maxRam: ${fn2(getMaxRam())}`);
+        ns.tprint(`maxRam: ${fn2(srvd.getMaxRam())}`);
         ns.tprint(servers.map((s, i) => `${i}: ${fn2(s.moneyMax)} ${s.hostname}`).join('\n'));
         return;
     }
@@ -32,18 +32,16 @@ export async function main(ns)
     ns.toast('preparing HGW', 'warning', 30e3);
     // prepare
     ns.kill('enslave.js');
-    for (const s of srvd.scanServers())
-        if (s.hasAdminRights && s.hostname != 'home')
-            ns.killall(s.hostname);
+    for (const s of srvd.getServers(s => s.purchasedByPlayer))
+        if (s.hostname != 'home') ns.killall(s.hostname);
 
     while (!hgwgServer(ns, s, ns.getPlayer())) await ns.sleep(10e3);
 
     ns.kill('enslave.js', 'home');
-    for (const s of srvd.scanServers())
-        if (s.hasAdminRights && s.hostname != 'home')
-            ns.killall(s.hostname);
+    for (const s of srvd.getServers(s => s.purchasedByPlayer))
+        if (s.hostname != 'home') ns.killall(s.hostname);
 
-    ns.toast('starting HGW', 'warning', 30e3);
+    ns.tprint('WARNING starting HGW');
     while (true)
     {
         while (handleMsg(ns, String(ns.readPort(1))));
@@ -69,6 +67,7 @@ export async function main(ns)
 /** @type {{[server:string]:number}} */
 const primes = {}
 let tLast = 0;
+let nextToast = 0;
 
 // https://www.reddit.com/r/Bitburner/comments/rm48o1
 /** @type {(ns:NS, s:Server, p:Player) => boolean} */
@@ -77,15 +76,20 @@ function hgwgServer(ns, s, p)
     const hf = ns.formulas.hacking;
     const now = Date.now();
     // priming in progress - return
-    if (now < (primes[s.hostname] || 0)) return;
+    if (now < (primes[s.hostname] || 0))
+    {
+        if (now >= nextToast && (nextToast += 5 * 60e3))
+            ns.tprint(`INFO priming ${fn(60 * (primes[s.hostname] - now), -3, 1)}min`);
+        return;
+    }
 
-    var maxWThreads = Math.min(2000, getMaxRam() / hackSlave.ram) | 0;
+    var maxWThreads = Math.min(2000, srvd.getMaxRam() / hackSlave.ram) | 0;
     var wThreads = (maxWThreads - ((s.minDifficulty) / 0.05));
 
     if (primes[s.hostname] !== 0)
     {
         // var maxGrowThreads = ((s.maxRam / hackSlave.ram) - (hackSlave.ram * maxWeakenThreads));
-        var maxGThreads = Math.min(getMaxRam() / hackSlave.ram) | 0;
+        var maxGThreads = Math.min(srvd.getMaxRam() / hackSlave.ram) | 0;
         maxGThreads = Math.min(maxGThreads, hf.growThreads(s, p, s.moneyMax));
 
         //Priming the server.  Max money and Min security must be acheived for this to work
@@ -171,12 +175,6 @@ function exec(ns, script, threads, ...args)
     if (pid) srvd.addServer(server.hostname);
     else ns.tprint(`ERROR exec ${server.hostname} ${threads} * ${script} ${args.join(' ')} failed`);
     return pid;
-}
-
-/** @return {number} */
-function getMaxRam()
-{
-    return Math.max.apply(null, srvd.getServers(s => s.purchasedByPlayer).map(s => s.maxRam));
 }
 
 /** @type {(ns:NS, s:string) => boolean} */
