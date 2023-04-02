@@ -17,7 +17,6 @@ export async function main(_ns)
     let p = ns.getPlayer();
 
     ns.clearPort(1);
-    clearFlag(ns, 'HGW');
     if (!ns.args.includes('-P')) clearFlag(ns, 'P');
     autoScript(ns, "t_connect home", () => true)();
     await ns.asleep(0.1);
@@ -28,7 +27,7 @@ export async function main(_ns)
     const autoTor = autoScript(ns, 'tor', () => homeRam >= 64 && !ns.fileExists('SQLInject.exe'));
     const autoGang = autoScript(ns, 'gang', () => canGang(ns));
     const autoHome = autoScript(ns, 'home', () => homeRam > 64 || p.money > 5e6);
-    const autoSlave = autoScript(ns, 'enslave', () => !ns.args.includes('-S') && !canHgw());
+    const autoSlave = autoScript(ns, 'enslave', () => !ns.args.includes('-S'));
     const autoHGW = autoScript(ns, 'hgwg', () => !ns.args.includes('-S') && canHgw());
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && canGang(ns));
 
@@ -48,9 +47,9 @@ export async function main(_ns)
             p = ns.getPlayer();
 
             autoSlave();
-            autoFormulas();
+            if (i) autoFormulas();
             autoHGW();
-            
+
             autoHome();
             autoTor();
             autoPurch();

@@ -89,6 +89,12 @@ export function clearServers()
 	saveData();
 }
 
+/** @return {number} */
+export function getMaxRam()
+{
+    return Math.max.apply(null, getServers(s => s.purchasedByPlayer).map(s => s.maxRam));
+}
+
 
 /** @type {(s:string|Server) => boolean} */
 export function rootable(s)

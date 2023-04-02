@@ -47,7 +47,6 @@ export async function main(ns)
         while (handleMsg(ns, String(ns.readPort(1))));
 
         purchasedServers.map(s => srvd.addServer(s.hostname, false));
-        s = srvd.addServer(s.hostname);
         const p = ns.getPlayer();
         const r = hgwgServer(ns, s, p);
         if (r) n++;
@@ -76,13 +75,14 @@ function hgwgServer(ns, s, p)
     const hf = ns.formulas.hacking;
     const now = Date.now();
     // priming in progress - return
-    if (now < (primes[s.hostname] || 0))
+    if (primes[s.hostname] !== 0 && now < (primes[s.hostname] || 0))
     {
-        if (now >= nextToast && (nextToast += 5 * 60e3))
-            ns.tprint(`INFO priming ${fn(60 * (primes[s.hostname] - now), -3, 1)}min`);
+        if (now >= nextToast && (nextToast = now + 5 * 60e3))
+            ns.tprint(`INFO priming ${fn((primes[s.hostname] - now) / 60, -3, 1)}min`);
         return;
     }
 
+    s = srvd.addServer(s.hostname);
     var maxWThreads = Math.min(2000, srvd.getMaxRam() / hackSlave.ram) | 0;
     var wThreads = (maxWThreads - ((s.minDifficulty) / 0.05));
 
@@ -93,7 +93,7 @@ function hgwgServer(ns, s, p)
         maxGThreads = Math.min(maxGThreads, hf.growThreads(s, p, s.moneyMax));
 
         //Priming the server.  Max money and Min security must be acheived for this to work
-        if (s.moneyAvailable < s.moneyMax)
+        if (s.moneyAvailable < s.moneyMax * 0.97)
         {
             primes[s.hostname] = now + hf.weakenTime(s, p) + 1000;
             const money = `${fn2(s.moneyAvailable)}/${fn2(s.moneyMax)} (${fn(s.moneyAvailable / s.moneyMax, 2, 1)}%)`;
@@ -106,10 +106,11 @@ function hgwgServer(ns, s, p)
         }
 
         //If Max Money is true, making sure security level is at its minimum
-        if (s.hackDifficulty > s.minDifficulty && primes[s.hostname] !== 0)
+        if (s.hackDifficulty > s.minDifficulty + 0.5)
         {
             primes[s.hostname] = now + hf.weakenTime(s, p) + 1000;
-            ns.tprint(`INFO prime weaken ${s.hostname} for ${fn(primes[s.hostname] - now, -3, 1)}s`);
+            const diff = `${fn2(s.minDifficulty)}+${fn2(s.hackDifficulty - s.minDifficulty)} (${fn(s.minDifficulty / s.hackDifficulty, 2, 1)}%)`;
+            ns.tprint(`INFO prime weaken ${s.hostname} ${diff} for ${fn(primes[s.hostname] - now, -3, 1)}s`);
             const pidw = exec(ns, 's_weaken.js', maxWThreads, s.hostname, maxWThreads, '--');
             if (!pidw) delete primes[s.hostname];
             return false;
@@ -125,8 +126,8 @@ function hgwgServer(ns, s, p)
     var GTime = hf.growTime(s, p);
     var HTime = hf.hackTime(s, p);
 
-    var gThreads = Math.ceil(logn(2.1, GPercent)); //Math.round(5 / (GPercent - 1)); //Getting the amount of threads I need to grow 200%.  I only need 100% but I'm being conservative here
-    var hThreads = Math.ceil(50 / HPercent);  //Getting the amount of threads I need to hack 50% of the funds
+    var gThreads = Math.ceil(logn(2, GPercent)); //Math.round(5 / (GPercent - 1)); //Getting the amount of threads I need to grow 200%.  I only need 100% but I'm being conservative here
+    var hThreads = Math.floor(50 / HPercent);  //Getting the amount of threads I need to hack 50% of the funds
     wThreads = Math.ceil(wThreads - (gThreads * 0.004)); //Getting required threads to fully weaken the server
 
     // HGWG part
@@ -135,7 +136,8 @@ function hgwgServer(ns, s, p)
     var wsleep = off; //At one point I made the weaken call sleep so I've kept it around
     var gsleep = off + WTime - GTime - DELAY / 4; //Getting the time to have the Growth execution sleep, then shaving some off to beat the weaken execution
     var hsleep = off + WTime - HTime - DELAY / 2; //Getting time for hack, shaving off more to make sure it beats both weaken and growth
-    // tLast = now + off + wsleep + WTime;
+    if (tLast > now + off + wsleep + WTime) ns.tprint(`overlap +${fn(tLast - (now + off + wsleep + WTime), -3, 0)}s`)
+    tLast = now + off + wsleep + WTime;
 
     //const tw = `${wThreads}:${fn(wsleep, -3, 2)}:${fn(wsleep + WTime, -3, 2)}`;
     //const tg = `${gThreads}:${fn(gsleep, -3, 2)}:${fn(gsleep + GTime, -3, 2)}`;
