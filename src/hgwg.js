@@ -1,13 +1,8 @@
 import { copy } from "./clear";
-import { clearFlag, setFlag } from "./constants";
 import * as srvd from "./serverData";
 import { fn, fn2, logn } from "./util";
 
 const DELAY = 20;
-
-const MONEY_THRES_FAC = 0.9;
-const SEC_THRES_FAC = 1.2;
-
 const hackSlave = { hostname: "s_grow.js", ram: 1.75 }
 
 /** @param {NS} ns */
@@ -28,23 +23,43 @@ export async function main(ns)
         return;
     }
 
+    let s = servers[servers.length - 1];
+    const TIMEFRAME = 10 * 60e3;
+
     let tStart = Date.now();
     let n = 0;
 
+    ns.toast('preparing HGW', 'warning', 30e3);
+    // prepare
+    ns.kill('enslave.js');
+    for (const s of srvd.scanServers())
+        if (s.hasAdminRights && s.hostname != 'home')
+            ns.killall(s.hostname);
+
+    while (!hgwgServer(ns, s, ns.getPlayer())) await ns.sleep(10e3);
+
+    ns.kill('enslave.js', 'home');
+    for (const s of srvd.scanServers())
+        if (s.hasAdminRights && s.hostname != 'home')
+            ns.killall(s.hostname);
+
+    ns.toast('starting HGW', 'warning', 30e3);
     while (true)
     {
-        purchasedServers.map(s => srvd.addServer(s.hostname, false));
         while (handleMsg(ns, String(ns.readPort(1))));
+
+        purchasedServers.map(s => srvd.addServer(s.hostname, false));
+        s = srvd.addServer(s.hostname);
         const p = ns.getPlayer();
-        const s = srvd.addServer(servers[servers.length - 1].hostname);
         const r = hgwgServer(ns, s, p);
         if (r) n++;
-        const dAvg = n < 10 ? 5e3 : 0.95 * Math.min(30 * 60e3, Date.now() - tStart) / n;
-        if (Date.now() - tStart > 30 * 60e3)
+
+        const dAvg = n < 10 ? 5e3 : 0.95 * Math.min(TIMEFRAME, Date.now() - tStart) / n;
+        if (Date.now() - tStart > TIMEFRAME)
         {
-            const delta = Date.now() - tStart - 30 * 60e3;
+            const delta = 1.25 * (Date.now() - tStart - TIMEFRAME);
             n -= delta / dAvg;
-            tStart += delta;
+            tStart += delta; // 1:08:30
             ns.tprint(`delta corr. ${delta | 0} n ${fn(delta / dAvg)}`)
         }
         await ns.asleep(DELAY + dAvg);
@@ -82,6 +97,7 @@ function hgwgServer(ns, s, p)
             const pidw = exec(ns, 's_weaken.js', maxWThreads, s.hostname, maxWThreads, '--');
             const pidg = exec(ns, 's_grow.js', maxGThreads, s.hostname, maxGThreads, '--');
             if (!(pidw && pidg)) delete primes[s.hostname];
+            else ns.exec('enslave.js', 'home');
             return false;
         }
 
@@ -94,7 +110,9 @@ function hgwgServer(ns, s, p)
             if (!pidw) delete primes[s.hostname];
             return false;
         }
+
         primes[s.hostname] = 0;
+        return true;
     }
 
     var HPercent = hf.hackPercent(s, p) * 100;
@@ -144,7 +162,7 @@ function exec(ns, script, threads, ...args)
 
     if (!server)
     {
-        if (Object.values(primes).find(n => n != 0))
+        if (Object.values(primes).find(n => n !== 0))
             ns.tprint(`ERROR maxRam: ${fn2(ram)}/${fn2(servers.reverse()[0].maxRam)} for ${threads} * ${script}`);
         return 0;
     }

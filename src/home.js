@@ -1,3 +1,4 @@
+import { canGang } from "./constants";
 import { task } from "./utilTask";
 
 /** @param {NS} ns */
@@ -19,7 +20,7 @@ export async function main(ns)
 		}
 
 		await ns.asleep(900);
-		if (!joined && ns.heart.break() < -54e3)
+		if (!joined && canGang(ns))
 		{
 			if (ns.readPort(101) == 'ok') joined = true;
 			else task(ns, "gcreate", "Slum Snakes");

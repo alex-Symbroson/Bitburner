@@ -5,7 +5,7 @@ const logn = (x = 0, b = 10) => Math.log2(x) / Math.log2(b);
 function fn2(x = 0, d = 0)
 {
 	const e = logn(x) / 3 | 0;
-	return (fn(x, -3 * e, d) + " kmbtqQsS"[e]).trimEnd();
+	return (fn(x, -3 * e, d) + " kmbtqQsSond"[e]).trimEnd();
 }
 /** @type {<T>(list: T[]) => T} */
 export const selectRandom = list => list[Math.random() * list.length | 0];

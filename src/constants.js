@@ -19,3 +19,6 @@ export const setFlag = (ns, f = '') => ns.write(fFlag, `,${f},`, 'a');
 export const getFlag = (ns, f = '') => ns.read(fFlag).includes(`,${f},`);
 /** @param {NS} ns */
 export const clearFlag = (ns, f = '') => ns.write(fFlag, ns.read(fFlag).replace(RegExp(`,${f},`, 'g'), ''), 'w');
+
+/** @param {NS} ns */
+export const canGang = ns => ns.heart.break() < -54e3;

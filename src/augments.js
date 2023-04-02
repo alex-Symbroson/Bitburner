@@ -1,5 +1,5 @@
 
-import { clearFlag, getNAug, setFlag, setNAug } from './constants';
+import { canGang, clearFlag, getNAug, setFlag, setNAug } from './constants';
 import { fn, fn2 } from './util'
 import { task } from './utilTask';
 
@@ -112,7 +112,7 @@ function check(ns, auto = null)
 
     var tn = 0, nn = 0;
     const hasEnoughAugs = () => purchased + ai >=
-        (ns.heart.break() > -54e3 ? AUGS_PREGANG : Math.min(allAugs.length - 8, AUGS_POSTGANG));
+        (!canGang(ns) ? AUGS_PREGANG : Math.min(allAugs.length - 8, AUGS_POSTGANG));
 
     if (ns.args.includes('-p') || ("an".includes(auto) && hasEnoughAugs() && checkInstall(ns, purchased + ai + ani)))
     {

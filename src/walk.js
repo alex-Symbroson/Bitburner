@@ -1,7 +1,7 @@
 
 /** @typedef {"strength"|"defense"|"agility"|"dexterity"} GymSt */
 
-import { KARMA_DELTA } from "./constants";
+import { canGang, KARMA_DELTA } from "./constants";
 import { task } from "./utilTask";
 
 /** @param {NS} ns */
@@ -25,14 +25,14 @@ export async function main(ns)
 			() => !ns.fileExists("BruteSSH.exe"),
 			() => task(ns, "cprog", "BruteSSH.exe")),
 		new Action(
-			() => !ns.gang.inGang() && p.skills[nextGymSt()] < 30,
+			() => !canGang(ns) && p.skills[nextGymSt()] < 30,
 			() => task(ns, "gym", "Powerhouse Gym", nextGymSt()),
 			() => task(ns, "gym", "Powerhouse Gym", nextGymSt())),
 		new Action(
-			() => !ns.gang.inGang() && p.money < 15e6,
+			() => !canGang(ns) && p.money < 15e6,
 			() => task(ns, "crime", "Larceny")),
 		new Action(
-			() => !ns.gang.inGang() && (ns.heart.break() > augKarma - KARMA_DELTA),
+			() => !canGang(ns) && ns.heart.break() > augKarma - KARMA_DELTA,
 			() => task(ns, "crime", "Homicide")),
 	];
 
