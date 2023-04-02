@@ -1,5 +1,5 @@
 /** @typedef {{name:string,favor:number,rep:number}} Fac */
-import { canGang } from "./constants";
+import { canGang, gangFaction, getFlag } from "./constants";
 import { fn2 } from "./util";
 import { task } from "./utilTask";
 
@@ -31,9 +31,6 @@ export async function main(ns)
 function getBestFavorFactions(ns, p)
 {
 	const donateFavor = ns.getFavorToDonate();
-	var gangFaction = '';
-	try { gangFaction = ns.gang.getGangInformation().faction; }
-	catch(e) {}
 	return p.factions
 		.map(name => ({
 			name,

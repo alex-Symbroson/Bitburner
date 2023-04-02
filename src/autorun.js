@@ -22,11 +22,14 @@ export async function main(_ns)
     autoScript(ns, "t_connect home", () => true)();
     await ns.asleep(0.1);
 
+    const canHgw = () => getFlag(ns, 'HGW') && ns.fileExists('Formulas.exe');
+
+    const autoFormulas = autoScript(ns, 'tor -t', () => getFlag(ns, 'HGW') && !ns.fileExists('Formulas.exe'));
     const autoTor = autoScript(ns, 'tor', () => homeRam >= 64 && !ns.fileExists('SQLInject.exe'));
     const autoGang = autoScript(ns, 'gang', () => canGang(ns));
     const autoHome = autoScript(ns, 'home', () => homeRam > 64 || p.money > 5e6);
-    const autoSlave = autoScript(ns, 'enslave', () => !ns.args.includes('-S') && !getFlag(ns, 'HGW'));
-    const autoHGW = autoScript(ns, 'hgwg', () => !ns.args.includes('-S') && getFlag(ns, 'HGW'));
+    const autoSlave = autoScript(ns, 'enslave', () => !ns.args.includes('-S') && !canHgw());
+    const autoHGW = autoScript(ns, 'hgwg', () => !ns.args.includes('-S') && canHgw());
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && canGang(ns));
 
     const autoWalk = autoScript(ns, 'walk', () => true);
@@ -41,11 +44,13 @@ export async function main(_ns)
     {
         if (i % 10 == 0)
         {
-            homeRam = ns.getServerMaxRam('home')
+            homeRam = ns.getServerMaxRam('home');
             p = ns.getPlayer();
-            autoSlave();
-            // autoHGW();
 
+            autoSlave();
+            autoFormulas();
+            autoHGW();
+            
             autoHome();
             autoTor();
             autoPurch();
@@ -60,11 +65,11 @@ export async function main(_ns)
     }
 }
 
-/** @type {(ns: NS, name: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => number)} */
-function autoScript(ns, name, cond)
+/** @type {(ns: NS, cmd: string, cond: (...a: any[]) => boolean) => ((...a: any[]) => number)} */
+function autoScript(ns, cmd, cond)
 {
-    var arg = name.split(' ');
-    name = arg[0];
+    const arg = cmd.split(' ');
+    const name = arg.shift();
 
     var pid = ns.ps().find(s => s.filename == name + '.js')?.pid || 0;
     return (...a) =>
@@ -72,11 +77,11 @@ function autoScript(ns, name, cond)
         if (!ns.isRunning(pid, 'home')) pid = 0;
         if (!pid && cond(...a))
         {
-            pid = ns.exec(name + '.js', 'home', 1, ...arg.slice(1));
+            pid = ns.exec(name + '.js', 'home', 1, ...arg);
             if (!name.startsWith("t_") && name != "augments")
             {
-                if (pid) ns.tprint(`WARN auto ${name}`);
-                else ns.tprint(`ERROR auto ${name} failed`);
+                if (pid) ns.tprint(`WARN auto ${cmd}`);
+                else ns.tprint(`ERROR auto ${cmd} failed`);
             }
         }
         return pid;

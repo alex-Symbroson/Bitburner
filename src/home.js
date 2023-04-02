@@ -1,4 +1,4 @@
-import { canGang } from "./constants";
+import { canGang, clearFlag, gangFaction, setFlag } from "./constants";
 import { task } from "./utilTask";
 
 /** @param {NS} ns */
@@ -23,7 +23,7 @@ export async function main(ns)
 		if (!joined && canGang(ns))
 		{
 			if (ns.readPort(101) == 'ok') joined = true;
-			else task(ns, "gcreate", "Slum Snakes");
+			else task(ns, "gcreate", gangFaction);
 		}
 	}
 }

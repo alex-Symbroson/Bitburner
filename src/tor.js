@@ -12,21 +12,21 @@ export async function main(ns)
 		"DeepscanV1.exe",
 		"DeepscanV2.exe",
 		"AutoLink.exe",
-		//"Formulas.exe"
+		"Formulas.exe"
 	];
 
-	const actions = [
-		() => ns.singularity.purchaseTor(),
-		...items.map(p => (() => ns.singularity.purchaseProgram(p)))
-	];
+	while (!ns.singularity.purchaseTor()) ns.sleep(5e3);
+	ns.tprint('purchased tor');
 
-	while (actions.length)
+	if (!ns.args.includes('t')) items.pop();
+
+	while (items.length)
 	{
-		if (actions[0]())
+		if (ns.singularity.purchaseProgram(items[0]))
 		{
-			ns.tprint(actions[0] + '');
-			actions.shift();
+			ns.tprint('purchased ' + items[0]);
+			items.shift();
 		}
-		else await ns.sleep(1000);
+		else await ns.sleep(5e3);
 	}
 }

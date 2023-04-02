@@ -1,5 +1,6 @@
 
 export const KARMA_DELTA = 12e3;
+export const gangFaction = "Slum Snakes";
 
 const fNAug = 'naug.txt';
 const fFlag = 'flags.txt';

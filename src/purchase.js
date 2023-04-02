@@ -68,6 +68,12 @@ async function daemon(ns)
     {
         // flag set by augments some time before installing
         if (ns.args.includes('-s') && getFlag(ns, 'P')) return;
+        // sleep while Formula.exe is bought
+        if (ns.isRunning('tor.js', 'home', '-t'))
+        {
+            await ns.asleep(10e3);
+            continue;
+        }
 
         const p = ns.getPlayer();
         if (ramLvl < maxRam)
