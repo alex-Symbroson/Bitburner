@@ -1,5 +1,6 @@
 import * as servers from "./servers";
 import * as utilx from "./utilx";
+import { scanServerNames as _scanServerNames } from "./util_ssn";
 
 /** @type {servers.BBServerData} */
 let data = new servers.BBServerData();
@@ -36,16 +37,6 @@ export function update()
 export const getCrackNo = ns =>
 	cracks.filter(f => ns.fileExists(f)).length;
 
-
-export function scanServerNames()
-{
-	const list = ["home"];
-	for (var n = 0, i = 999; i-- && n < list.length; n++)
-		list.push(...ns.scan(list[n]).filter(s => !list.includes(s)));
-	if (i >= 999) ns.tprint("WARNING: scanServer loop limit reached")
-	return list;
-}
-
 export function scanServerPath(name = "home")
 {
 	const path = [name], list = ["home"], pre = /** @type {{[x:string]:string}} */ ({});
@@ -61,9 +52,11 @@ export function scanServerPath(name = "home")
 	return path.reverse()
 }
 
+export const scanServerNames = _scanServerNames;
+
 export function scanServers()
 {
-	const list = scanServerNames().map(s => addServer(s, false))
+	const list = scanServerNames(ns).map(s => addServer(s, false))
 	return (saveData(), list)
 }
 

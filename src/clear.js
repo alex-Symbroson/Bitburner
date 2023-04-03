@@ -1,5 +1,7 @@
 // for i in t_*; do i=${i/.js/}; echo "${i/t_/}"; grep -nE "\"${i/t_/}\"" *; done
 
+import { scanServerNames } from "./util_ssn";
+
 /** @param {NS} ns */
 export async function main(ns)
 {
@@ -16,16 +18,6 @@ export async function main(ns)
         await ns.sleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)
-}
-
-/** @param {NS} ns */
-export function scanServerNames(ns)
-{
-    const list = ["home"];
-    for (var n = 0, i = 999; i-- && n < list.length; n++)
-        list.push(...ns.scan(list[n]).filter(s => !list.includes(s)));
-    if (i >= 999) ns.tprint("WARN scanServer loop limit reached")
-    return list;
 }
 
 /** @type {(ns:NS, s:string) => void} */
