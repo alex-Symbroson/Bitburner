@@ -18,7 +18,7 @@ export async function main(_ns)
 
 function scan()
 {
-	for (const t of srvd.scanServerNames())
+	for (const t of srvd.scanServerNames(ns))
 	{
 		if (srvd.getServer(t)) continue;
 		const d = srvd.addServer(t, false)

@@ -24,14 +24,16 @@ const stats = { idle: 0, all: new SProcStats(), active: {} }
 /** @param {NS} ns */
 export async function main(ns)
 {
+	const daemon = ns.args.includes('-d');
     init(ns);
     for (var i = 0; ; i++)
     {
         while (handleMsg(ns, String(ns.readPort(1))));
         if (i % 10 == 0) await checkNewServers();
         await enslaveServers();
-        await ns.asleep(2000);
         if (i % 5 == 0) printStats();
+        if (!daemon) return;
+        await ns.asleep(2000);
     }
 }
 

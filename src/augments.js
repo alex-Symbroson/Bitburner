@@ -46,7 +46,7 @@ export async function main(ns)
 /** @type {(ns:NS, auto?:string) => number} */
 function check(ns, auto = null)
 {
-    const allow = [NFG, "Neuroreceptor Management Implant", "The Red Pill"]
+    const allow = [NFG, "Neuroreceptor Management Implant", "The Red Pill", "CashRoot Starter Kit"]
     const p = ns.getPlayer();
     const fs = p.factions
         .map(f => getFaction(ns, f))
@@ -59,6 +59,7 @@ function check(ns, auto = null)
     const ownedAugs = ns.singularity.getOwnedAugmentations(true);
     const purchased = ownedAugs.length - installedAugs.length;
     if (installedAugs.length < 4) setNAug(ns);
+    if (ownedAugs.includes("Neuroreceptor Management Implant")) setFlag(ns, 'NMI');
 
     for (const f of fs)
     {
@@ -136,12 +137,13 @@ function check(ns, auto = null)
         if (tn + nn) ns.tprint(`purchased ${tn} Augs and ${nn} NeuroFlux`);
     }
 
-    if (ns.args.includes('-R') || (auto == "R" && checkInstall(ns)))
+    const purchasedPill = ownedAugs.includes('The Red Pill') && !installedAugs.includes('The Red Pill');
+    if (ns.args.includes('-R') || (auto == "R" && checkInstall(ns)) || purchasedPill)
     {
         if (auto) ns.tprint("WARN AUTO INSTALL AUGS");
         else ns.tprint("WARN INSTALL AUGS");
         clearFlag(ns, 'P');
-        ns.write('karma.txt', String(ns.heart.break()));
+        ns.write('karma.txt', String(ns.heart.break()), 'w');
         task(ns, "installAugs", ns.args.includes('-R') ? "" : "-d");
     }
 

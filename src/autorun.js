@@ -3,6 +3,8 @@
 import { canGang, clearFlag, getFlag } from "./constants";
 
 /** @type {NS}    */ var ns;
+/** @type {{[cmd:string]:number}} */
+const pids = {}
 
 /** @param {NS} _ns */
 export async function main(_ns)
@@ -15,50 +17,55 @@ export async function main(_ns)
 
     let homeRam = ns.getServerMaxRam('home');
     let p = ns.getPlayer();
+    let now = Date.now();
 
     ns.clearPort(1);
     if (!ns.args.includes('-P')) clearFlag(ns, 'P');
+    clearFlag(ns, 'NMI');
     autoScript(ns, "t_connect home", () => true)();
     await ns.asleep(0.1);
 
     const canHgw = () => getFlag(ns, 'HGW') && ns.fileExists('Formulas.exe');
+    const canPurch = () => homeRam >= 64 && !getFlag(ns, 'P');
 
-    const autoFormulas = autoScript(ns, 'tor -t', () => getFlag(ns, 'HGW') && !ns.fileExists('Formulas.exe'));
+    const autoFormulas = autoScript(ns, 'tor -f', () => getFlag(ns, 'HGW') && !ns.fileExists('Formulas.exe'));
     const autoTor = autoScript(ns, 'tor', () => homeRam >= 64 && !ns.fileExists('SQLInject.exe'));
-    const autoGang = autoScript(ns, 'gang', () => canGang(ns));
+    const autoGang = autoScript(ns, 'gang -d', () => p.factions.length > 0 && canGang(ns));
     const autoHome = autoScript(ns, 'home', () => homeRam > 64 || p.money > 5e6);
-    const autoSlave = autoScript(ns, 'enslave', () => !ns.args.includes('-S'));
-    const autoHGW = autoScript(ns, 'hgwg', () => !ns.args.includes('-S') && canHgw());
+    const autoSlave = autoScript(ns, 'enslave -d', () => !ns.args.includes('-S'));
+    const autoHGW = autoScript(ns, 'hgwg -d', () => !ns.args.includes('-S') && canHgw());
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && canGang(ns));
 
-    const autoWalk = autoScript(ns, 'walk', () => true);
-    const autoPurch = autoScript(ns, 'purchase -d -s', () => homeRam >= 64 && !ns.args.includes('-P'));
-    const autoHud = autoScript(ns, 'hud', () => homeRam >= 64);
+    const autoPurch = autoScript(ns, 'purchase -D -s', () => !ns.args.includes('-P') && canPurch());
+    const autoHud = autoScript(ns, 'hud -d', () => homeRam >= 64);
     const autoAug = autoScript(ns, 'augments -c', () => p.factions.length > 4);
     const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
-    autoWalk();
+    ns.exec('walk.js', 'home');
+    let tNextShare = now;
 
+    now = Date.now();
     for (var i = 0; ; i++)
     {
-        if (i % 10 == 0)
-        {
-            homeRam = ns.getServerMaxRam('home');
-            p = ns.getPlayer();
+        homeRam = ns.getServerMaxRam('home');
+        p = ns.getPlayer();
 
-            autoSlave();
-            if (i) autoFormulas();
-            autoHGW();
+        if (i % 10 == 0) autoSlave();
+        if (i % 10 == 8) autoFormulas(); // execute after purchase
+        if (i % 10 == 1) autoHGW();
 
-            autoHome();
-            autoTor();
-            autoPurch();
-            if (p.factions.length > 0) autoGang();
-            autoHud();
-        }
+        if (i % 10 == 2) autoHome();
+        if (i % 10 == 3) autoTor();
+        if (i % 10 == 4 && !pids['tor -t']) autoPurch();
+        if (i % 10 == 5) autoGang();
+        if (i % 10 == 6) autoHud();
 
+        now = Date.now();
         if (i % 97 == 0) autoAug();
         if (i % 107 == 0) autoDestroy();
+        if (i % 117 == 0) for (const f of ns.ls('home', '-copy')) ns.rm(f);
+        if (now > tNextShare) autoShare();
+        if (now > tNextShare) tNextShare = now + 10e3
 
         await ns.asleep(1000);
     }
@@ -77,12 +84,19 @@ function autoScript(ns, cmd, cond)
         if (!pid && cond(...a))
         {
             pid = ns.exec(name + '.js', 'home', 1, ...arg);
-            if (!name.startsWith("t_") && name != "augments")
-            {
-                if (pid) ns.tprint(`WARN auto ${cmd}`);
-                else ns.tprint(`ERROR auto ${cmd} failed`);
-            }
+            if(!pid) ns.tprint(`ERROR auto ${cmd} failed`);
+            else if (!name.startsWith("t_") && name.includes('-d'))
+                ns.tprint(`WARN auto ${cmd}`);
         }
-        return pid;
+        return pids[cmd] = pid;
     }
+}
+
+function autoShare()
+{
+    const max = ns.getServerMaxRam('home');
+    const used = ns.getServerUsedRam('home');
+    const ram = (max - used - 100) * 0.9;
+    const threads = ram / ns.getScriptRam('s_share.js') | 0;
+    if (threads > 0) ns.exec('s_share.js', 'home', threads);
 }

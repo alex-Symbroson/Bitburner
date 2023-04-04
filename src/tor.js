@@ -3,6 +3,7 @@
 /** @param {NS} ns */
 export async function main(ns)
 {
+	const daemon = ns.args.includes('-d');
 	const items = ["BruteSSH.exe",
 		"FTPCrack.exe",
 		"relaySMTP.exe",
@@ -15,18 +16,17 @@ export async function main(ns)
 		"Formulas.exe"
 	];
 
-	while (!ns.singularity.purchaseTor()) ns.sleep(5e3);
-	ns.tprint('purchased tor router');
+	while (!ns.singularity.purchaseTor())
+		if (daemon) await ns.sleep(5e3);
+		else return;
 
-	if (!ns.args.includes('-t')) items.pop();
+	if (!ns.args.includes('-f')) items.pop();
 
 	while (items.length)
 	{
 		if (ns.singularity.purchaseProgram(items[0]))
-		{
-			ns.tprint('purchased ' + items[0]);
 			items.shift();
-		}
-		else await ns.sleep(5e3);
+		else if (daemon) await ns.sleep(5e3);
+		else return;
 	}
 }

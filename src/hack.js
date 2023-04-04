@@ -31,17 +31,17 @@ export function checkServer(ns, s)
 	}
 }
 
-const bdoors = /** @type {{[name:string]:boolean}} */ ({});
+const bdoors = /** @type {{[name:string]:number}} */ ({});
 /** @type {(ns:NS, path: string[]) => void} */
 function backdoor(ns, path)
 {
 	try
 	{
 		const name = path[path.length - 1];
-		if (bdoors[name]) return;
+		if (ns.isRunning(bdoors[name])) return;
 		var pid = ns.exec("backdoor.js", "home", 1, ...path);
 		if (!pid) return ns.tprint(`ERROR backdooring ${name} failed`);
-		bdoors[name] = true;
+		bdoors[name] = pid;
 		ns.tprint(`INFO backdooring ${name} : ${pid}`);
 	}
 	catch (e)

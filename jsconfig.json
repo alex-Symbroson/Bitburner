@@ -3,6 +3,7 @@
         "allowJs": true,
         "checkJs": true,
         "noImplicitAny": true,
+        "target": "ES6",
         "lib": [
           "ES2019", "DOM"
         ]

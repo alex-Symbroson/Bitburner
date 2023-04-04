@@ -34,7 +34,8 @@ var ethical = "";
 export async function main(ns)
 {
 	if (!ns.gang.inGang()) return;
-	
+
+	const daemon = ns.args.includes('-d');
 	const memberNames = ns.gang.getMemberNames();
 	for (const name of memberNames)
 		tasks[name] = ns.gang.getMemberInformation(name).task;
@@ -99,6 +100,7 @@ export async function main(ns)
 			memberNames.push(name);
 			ns.gang.setMemberTask(name, "Train Hacking");
 		}
+		if (!daemon) return;
 		await ns.sleep(1000);
 	}
 }

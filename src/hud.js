@@ -7,7 +7,8 @@ export async function main(ns)
     // ns.clearLog();
     // ns.tail();
 
-    const args = ns.flags([["help", false]]);
+    const daemon = ns.args.includes('-d');
+    const args = ns.flags([["d", false], ["help", false]]);
     if (args.help)
     {
         ns.tprint("This script will enhance your HUD (Heads up Display) with custom statistics.");
@@ -131,15 +132,16 @@ export async function main(ns)
             if (extraInfo.augs) addElement('Augs' + augsTitle + supb, extraInfo.augs[1] + supb, "secondary", "Next Augmentations")
 
             var theme = ns.ui.getTheme()
-
         }
         catch (err)
         {
             ns.tprint("ERROR: Update Skipped: " + String(err.stack));
+            if (!daemon) return;
             await ns.asleep(10e3);
         }
 
-        ns.atExit(function () { removeByClassName('.HUD_el'); })
+        ns.atExit(function () { removeByClassName('.HUD_el'); });
+        if (!daemon) return;
         await ns.sleep(200);
     }
 }

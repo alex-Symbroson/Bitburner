@@ -10,8 +10,8 @@ export async function main(ns)
 {
     srvd.init(ns);
     hackSlave.ram = ns.getScriptRam(hackSlave.hostname);
-    const purchasedServers = srvd.getServers(s => s.purchasedByPlayer);
 
+    const daemon = ns.args.includes('-d');
     const servers = srvd.getServers()
         .filter(s => !s.purchasedByPlayer && s.hasAdminRights && s.moneyMax)
         .sort((a, b) => a.moneyMax - b.moneyMax);
@@ -29,37 +29,40 @@ export async function main(ns)
     let tStart = Date.now();
     let n = 0;
 
-    ns.toast('preparing HGW', 'warning', 30e3);
-    // prepare
-    ns.kill('enslave.js');
-    for (const s of srvd.getServers(s => s.purchasedByPlayer))
-        if (s.hostname != 'home') ns.killall(s.hostname);
+    if (!hgwgServer(ns, s, ns.getPlayer()))
+    {
+        ns.toast('preparing HGW', 'warning', 30e3);
+        // prepare
+        ns.kill('enslave.js');
+        for (const s of srvd.getServers(s => s.purchasedByPlayer))
+            if (s.hostname != 'home') ns.killall(s.hostname);
 
-    while (!hgwgServer(ns, s, ns.getPlayer())) await ns.sleep(10e3);
+        while (!hgwgServer(ns, s, ns.getPlayer())) await ns.sleep(10e3);
 
-    ns.kill('enslave.js', 'home');
-    for (const s of srvd.getServers(s => s.purchasedByPlayer))
-        if (s.hostname != 'home') ns.killall(s.hostname);
+        ns.kill('enslave.js', 'home');
+        for (const s of srvd.getServers(s => s.purchasedByPlayer))
+            if (s.hostname != 'home') ns.killall(s.hostname);
+    }
 
     ns.tprint('WARNING starting HGW');
     while (true)
     {
         while (handleMsg(ns, String(ns.readPort(1))));
 
-        purchasedServers.map(s => srvd.addServer(s.hostname, false));
         const p = ns.getPlayer();
         const r = hgwgServer(ns, s, p);
         if (r) n++;
 
-        const dAvg = n < 10 ? 5e3 : 0.95 * Math.min(TIMEFRAME, Date.now() - tStart) / n;
+        const dAvg = n < 10 ? 200 : Math.min(TIMEFRAME, Date.now() - tStart) / n;
         if (Date.now() - tStart > TIMEFRAME)
         {
             const delta = 1.25 * (Date.now() - tStart - TIMEFRAME);
             n -= delta / dAvg;
-            tStart += delta; // 1:08:30
-            ns.tprint(`delta corr. ${delta | 0} n ${fn(delta / dAvg)}`)
+            tStart += 2 * delta; // 1:08:30
+            // ns.tprint(`delta corr. ${delta | 0} n ${fn(delta / dAvg)}`);
         }
-        await ns.asleep(DELAY + dAvg);
+        if (!daemon) return;
+        await ns.asleep(DELAY + 0 * dAvg);
     }
 }
 
@@ -85,6 +88,9 @@ function hgwgServer(ns, s, p)
     s = srvd.addServer(s.hostname);
     var maxWThreads = Math.min(2000, srvd.getMaxRam() / hackSlave.ram) | 0;
     var wThreads = (maxWThreads - ((s.minDifficulty) / 0.05));
+
+    const purchasedServers = srvd.getServers(s => s.purchasedByPlayer);
+    purchasedServers.map(s => srvd.addServer(s.hostname, false));
 
     if (primes[s.hostname] !== 0)
     {

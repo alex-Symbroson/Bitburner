@@ -31,8 +31,8 @@ export async function main(ns)
     if (ns.args[0] == "-i") ns.tprint(ns.getPurchasedServerCost(Number(ns.args[0])).toExponential(2));
     else if (ns.args[1] == "-p") ns.purchaseServer(String(ns.args[2]), Number(ns.args[0]));
     else if (ns.args[0] == "-k") ns.kill(pid) ? ns.tprint('killed purchase.js') : ns.tprint('ERROR failed killing purchase.js');
-    else if (ns.args[0] == "-d") pid ? ns.tprint('WARNING purchase.js already running') : await daemon(ns);
-    else daemon(ns);
+    else if (String(ns.args[0]).toLowerCase() == "-d" && pid) ns.tprint('WARNING purchase.js already running');
+    else await daemon(ns);
 }
 
 /** @param {NS} ns **/
@@ -41,12 +41,12 @@ async function daemon(ns)
     let counts = getCount(servers);
 
     // execute getCount before!
-    const ramBump = () =>
+    const ramBump = (print = false) =>
     {
         ramLvl++;
-        ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl - 1)} -> ${getRamStr(ns, 1 << ramLvl)} (${tBump.next()}s)`);
+        if (print) ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl - 1)} -> ${getRamStr(ns, 1 << ramLvl)} (${tBump.next()}s)`);
         if (!ns.args.length) return;
-        printCount(ns, counts, ramLvl);
+        if (print) printCount(ns, counts, ramLvl);
 
         if (ramLvl > 16 || counts[1 << 15] > 1) setFlag(ns, 'HGW');
         else clearFlag(ns, 'HGW');
@@ -58,8 +58,11 @@ async function daemon(ns)
     else clearFlag(ns, 'HGW');
 
     // general info
-    ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`);
-    printCount(ns, counts, ramLvl);
+    if (!(ns.args.includes('-s') || ns.args.includes('-d')))
+    {
+        ns.tprint(`${servers.length} servers, ${ramLvl}/${maxRam} ram`);
+        printCount(ns, counts, ramLvl);
+    }
 
     // flush port
     ns.clearPort(2);
@@ -71,25 +74,32 @@ async function daemon(ns)
         // sleep while Formula.exe is bought
         if (ns.isRunning('tor.js', 'home', '-t'))
         {
-            await ns.asleep(10e3);
+            if (ns.args.includes('-D')) return;
+            if (ns.args.includes('-d')) await ns.asleep(10e3);
             continue;
         }
 
         const p = ns.getPlayer();
+        let ram = Math.min(1 << maxRam, 1 << ramLvl);
+        let cost = ns.getPurchasedServerCost(ram);
+
         if (ramLvl < maxRam)
         {
             counts = getCount(servers);
             // skip ram level when money is significantly greater
-            while (ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump();
+            while (ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump(p.money >= cost * 2);
             // skip ram level when reached max of single server type
-            if (counts[1 << ramLvl] >= (MAX_SERVERS[ramLvl] || MAX_SERVERS_DFLT)) ramBump();
+            if (counts[1 << ramLvl] >= (MAX_SERVERS[ramLvl] || MAX_SERVERS_DFLT)) ramBump(p.money >= cost * 2);
         }
         if (!ns.args.length) return;
+        ram = Math.min(1 << maxRam, 1 << ramLvl);
+        cost = ns.getPurchasedServerCost(ram);
 
-        const ram = Math.min(1 << maxRam, 1 << ramLvl);
-        const cost = ns.getPurchasedServerCost(ram);
-
-        if (p.money < cost) await ns.asleep(1e4);
+        if (p.money < cost)
+        {
+            if (ns.args.includes('-D')) return;
+            if (ns.args.includes('-d')) await ns.asleep(10e3);
+        }
         else if (servers.length == srvLimit)
         {
             ns.writePort(1, `sd ${servers[0].hostname}`);
@@ -98,7 +108,7 @@ async function daemon(ns)
             {
                 await ns.sleep(200);
                 if (!i--) ns.toast("purchase.js waiting for delete response", "warning", 30e3);
-            } while (ns.readPort(2) != "registered")
+            } while (ns.readPort(2) != "registered");
 
             ns.killall(servers[0].hostname);
             ns.deleteServer(servers[0].hostname);
