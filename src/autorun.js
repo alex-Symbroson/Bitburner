@@ -36,9 +36,10 @@ export async function main(_ns)
     const autoHGW = autoScript(ns, 'hgwg -d', () => !ns.args.includes('-S') && canHgw());
     // const autoWork = autoScript(ns, 'work', () => p.money > 5e6 && canGang(ns));
 
+    const autoCont = autoScript(ns, 'contracts -s', () => homeRam > 64);
     const autoPurch = autoScript(ns, 'purchase -D -s', () => !ns.args.includes('-P') && canPurch());
     const autoHud = autoScript(ns, 'hud -d', () => homeRam >= 64);
-    const autoAug = autoScript(ns, 'augments -c', () => p.factions.length > 4);
+    const autoAug = autoScript(ns, 'augments -c', () => p.factions.length >= 2);
     const autoDestroy = autoScript(ns, 't_destroyDaemon 12 autorun.js', () => ns.hasRootAccess('w0r1d_d43m0n'));
 
     ns.exec('walk.js', 'home');
@@ -61,12 +62,13 @@ export async function main(_ns)
         if (i % 10 == 6) autoHud();
 
         now = Date.now();
-        if (i % 97 == 0) autoAug();
-        if (i % 107 == 0) autoDestroy();
-        if (i % 117 == 0) for (const f of ns.ls('home', '-copy')) ns.rm(f);
+        if (i % 100 == 7) autoAug();
+        if (i % 600 == 7) autoCont();
+        if (i % 600 == 9) autoDestroy();
+        if (i % 100 == 9) for (const f of ns.ls('home', '-copy')) ns.rm(f);
+
         if (now > tNextShare) autoShare();
         if (now > tNextShare) tNextShare = now + 10e3
-
         await ns.asleep(1000);
     }
 }

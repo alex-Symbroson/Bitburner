@@ -31,6 +31,7 @@ export function closeWeights(list, m = e => Number(e), f = 0, base = 2, stepExp 
 
 /** @type {(arr: number[]) => number} */
 const sum = arr => arr.reduce((a, b) => a + b, 0);
+export const S = JSON.stringify;
 
 /** @type {(arr: number[]) => number} */
 const mean = arr => sum(arr) / arr.length;
