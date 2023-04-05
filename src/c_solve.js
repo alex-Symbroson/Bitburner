@@ -145,8 +145,9 @@ function ajg2(data, p = 0, n = 0)
 /** @type {(data:number[][]) => number[][]} */
 function moi(data)
 {
-	// for(let i = 0, cur = data[i]
-	return [];
+	data.sort((a, b) => a[0] - b[0]);
+	return data.sort((a, b) => b[1] - a[1])
+		.reduce((r, [a, b]) => r[0][0] <= b ? [[Math.min(a, r[0][0]), r[0][1]]].concat(r.slice(1)) : [[a, b]].concat(r), [data[0]]);
 }
 
 // 2500221247, 0814675 : []
@@ -169,18 +170,17 @@ function gipa(data, res = [])
 	return ret;
 }
 
-
-/** @type {(data:any) => any} */
+/** @type {(data:number[]) => number} */
 function ast1(data)
 {
-
+	return Math.max(0, ...data.map((v, i) => Math.max(...data.slice(i + 1).map(w => w - v))));
 }
 
 
-/** @type {(data:any) => any} */
+/** @type {(data:number[]) => number} */
 function ast2(data)
 {
-
+	return data.map((v, i) => data[i + 1] - v).reduce((s, a) => a > 0 ? s + a : s, 0);
 }
 
 
@@ -198,31 +198,64 @@ function ast4(data)
 }
 
 
-/** @type {(data:any) => any} */
+/** @type {(data:number[][]) => any} */
 function mpst(data)
 {
-
+	for (let i = data.length - 2; i >= 0; i--)
+		for (let j = 0; j <= i; j++)
+			data[i][j] += Math.min(data[i + 1][j], data[i + 1][j + 1]);
+	return data[0][0];
 }
 
 
-/** @type {(data:any) => any} */
-function upg1(data)
+/** @type {(data:[number,number]) => number} */
+function upg1([w, h])
 {
-
+	// permutaions of w-1 R and h-1 D
+	let num = (w--, h--, 1);
+	for (let i = 1; i <= w; i++)
+		num *= (h + i) / i;
+	return num;
 }
 
-
-/** @type {(data:any) => any} */
+/** @type {(data:number[][]) => number} */
 function upg2(data)
 {
-
+	for (let i = 0; i < data.length; i++)
+	{
+		for (let j = 0; j < data[0].length; j++)
+		{
+			if (data[i][j] == 1) data[i][j] = 0;
+			else if (i == 0 && j == 0) data[0][0] = 1;
+			else
+				data[i][j] = (i > 0 ? data[i - 1][j] : 0) + (j > 0 ? data[i][j - 1] : 0);
+		}
+	}
+	return data[data.length - 1][data[0].length - 1]
 }
 
-
-/** @type {(data:any) => any} */
+/** @type {(data:number[][]) => string} */
 function spg(data)
 {
+	const ROW = data.length, COL = data[0].length, dirs = "DURL";
+	/** @type {[number,number,string][]} */
+	const q = [[0, 0, ""]], visited = new Set([0]);
 
+	while (q.length)
+	{
+		const [x, y, path] = q.shift();
+		if (x == ROW - 1 && y == COL - 1) return path;
+		for (let i = 0; i < 4; i++)
+		{
+			const [nx, ny] = [x + [1, -1][i] || 0, y + [1, -1][i - 2] || 0];
+			if (nx >= 0 && nx < ROW && ny >= 0 && ny < COL && data[nx][ny] === 0 && !visited.has(nx * 1e5 + ny))
+			{
+				visited.add(nx * 1e5 + ny);
+				q.push([nx, ny, path + dirs[i]]);
+			}
+		}
+	}
+	return "";
 }
 
 // TODO: preserve letters all wrong
@@ -252,10 +285,26 @@ function spe(data)
 }
 
 
-/** @type {(data:any) => any} */
-function fvme(data)
+/** @type {(data:[string,number],path?:string,pos?: number, evaluated?: number, multed?: number) => string[]} */
+function fvme([num, target], path = "", pos = 0, evaluated = 0, multed = 0)
 {
+	if (pos == num.length) return target == evaluated ? [path] : [];
 
+	let result = /** @type {string[]} */ ([]);
+	for (let i = pos; i < num.length; ++i)
+	{
+		if (i !== pos && num[pos] == "0") break;
+		const cur = Number(num.slice(pos, i + 1));
+
+		if (pos == 0)
+			result = result.concat(fvme([num, target], "" + cur, i + 1, cur, cur));
+		else
+			result = result.concat(
+				fvme([num, target], path + "+" + cur, i + 1, evaluated + cur, cur),
+				fvme([num, target], path + "-" + cur, i + 1, evaluated - cur, -cur),
+				fvme([num, target], path + "*" + cur, i + 1, evaluated - multed + multed * cur, multed * cur));
+	}
+	return result;
 }
 
 // 4812415 wrong "10010001000101100111001111111"
@@ -290,10 +339,10 @@ function p2cg(data)
 }
 
 
-/** @type {(data:any) => any} */
+/** @type {(data:string) => string} */
 function c1rlec(data)
 {
-
+	return data.replace(/(.)\1{0,8}/g, (m, c) => m.length + c);
 }
 
 
@@ -311,16 +360,18 @@ function c3lzc(data)
 }
 
 
-/** @type {(data:any) => any} */
-function e1cc(data)
+/** @type {(data:[string,number]) => string} */
+function e1cc([str, shift])
 {
-
+	const dec = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	return str.replace(/[a-z]/gi, c => dec[(dec.indexOf(c) + 26 - shift) % 26]);
 }
 
 
-/** @type {(data:any) => any} */
-function e2vc(data)
+/** @type {(data:[string,string]) => string} */
+function e2vc([str, key])
 {
-
+	const dec = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	return str.replace(/[a-z]/gi, (c, i) => dec[(dec.indexOf(c) + dec.indexOf(key[i % key.length])) % 26]);
 }
 
