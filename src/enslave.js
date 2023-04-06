@@ -49,7 +49,7 @@ async function enslaveServers()
         catch (e) { continue; }
         if (s.maxRam - s.ramUsed < hackSlave.ram) continue;
         slave(s, svList);
-        await ns.sleep(10);
+        await ns.asleep(10);
     }
 }
 
@@ -87,7 +87,7 @@ async function checkNewServers()
             stats.active[s.hostname] = { grow: [], weaken: [], hack: [] }
 
         hack.checkServer(ns, s);
-        await ns.sleep(10);
+        await ns.asleep(10);
     }
 }
 

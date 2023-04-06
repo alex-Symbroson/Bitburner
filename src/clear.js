@@ -15,7 +15,7 @@ export async function main(ns)
         if (!ns.args.length || ns.args.includes("-k")) ns.killall(s);
         if (!ns.args.length || ns.args.includes("-x")) clear(ns, s);
         if (!ns.args.length || ns.args.includes("-c")) copy(ns, s);
-        await ns.sleep(10);
+        await ns.asleep(10);
     }
     ns.tprint(`processed ${srvs.length} servers`)
 }

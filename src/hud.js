@@ -142,6 +142,6 @@ export async function main(ns)
 
         ns.atExit(function () { removeByClassName('.HUD_el'); });
         if (!daemon) return;
-        await ns.sleep(200);
+        await ns.asleep(200);
     }
 }

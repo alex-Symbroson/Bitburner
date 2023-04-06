@@ -33,7 +33,7 @@ const tested = [
     // "HammingCodes: Encoded Binary to Integer",
     // "Proper 2-Coloring of a Graph",
     "Compression I: RLE Compression",
-    // "Compression II: LZ Decompression",
+    "Compression II: LZ Decompression",
     // "Compression III: LZ Compression",
     "Encryption I: Caesar Cipher",
     "Encryption II: Vigenère Cipher",

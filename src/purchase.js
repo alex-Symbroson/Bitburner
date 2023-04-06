@@ -44,7 +44,8 @@ async function daemon(ns)
     const ramBump = (print = false) =>
     {
         ramLvl++;
-        if (print) ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl - 1)} -> ${getRamStr(ns, 1 << ramLvl)} (${tBump.next()}s)`);
+        const cost = ns.getPurchasedServerCost(1 << ramLvl);
+        if (print) ns.tprint(`WARN ram bump ${getRamStr(ns, 1 << ramLvl - 1)} -> ${getRamStr(ns, 1 << ramLvl)} (${tBump.next()}s) ${fn2(cost)}`);
         if (!ns.args.length) return;
         if (print) printCount(ns, counts, ramLvl);
 
@@ -87,7 +88,7 @@ async function daemon(ns)
         {
             counts = getCount(servers);
             // skip ram level when money is significantly greater
-            while (ns.getPurchasedServerCost(1 << ramLvl) < p.money / 4) ramBump(p.money >= cost * 2);
+            while (p.money > 4 * ns.getPurchasedServerCost(1 << ramLvl)) ramBump(p.money >= cost * 2);
             // skip ram level when reached max of single server type
             if (counts[1 << ramLvl] >= (MAX_SERVERS[ramLvl] || MAX_SERVERS_DFLT)) ramBump(p.money >= cost * 2);
         }
@@ -106,7 +107,7 @@ async function daemon(ns)
             let i = 20 * (1000 / 200);
             do
             {
-                await ns.sleep(200);
+                await ns.asleep(200);
                 if (!i--) ns.toast("purchase.js waiting for delete response", "warning", 30e3);
             } while (ns.readPort(2) != "registered");
 
@@ -136,7 +137,7 @@ function printCount(ns, counts, ramLvl, newserv = '')
     const info =
         `INFO ${ramLvl}/${maxRam} [$${fn2(ns.getPurchasedServerCost(1 << ramLvl))}]: ` +
         Object.keys(counts).map(k => `${counts[k]} ${getRamStr(ns, Number(k))}`).join(", ");
-    ns.tprint(info + ' ' + newserv);
+    if (newserv) ns.tprint(info + ' ' + newserv);
     ns.writePort(20, 'purch§' + info.replace(': ', '§'));
 }
 

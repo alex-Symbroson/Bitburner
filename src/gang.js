@@ -81,7 +81,7 @@ export async function main(ns)
 					player.money -= cost;
 				}
 			}
-			await ns.sleep(100);
+			await ns.asleep(100);
 		}
 
 		if (!ethical)
@@ -96,12 +96,12 @@ export async function main(ns)
 			const name = selectRandom(names)[memberNames.length];
 			ns.tprint("INFO recruiting " + name);
 			dotask(ns, "grecruit", name);
-			await ns.sleep(100);
+			await ns.asleep(100);
 			memberNames.push(name);
 			ns.gang.setMemberTask(name, "Train Hacking");
 		}
 		if (!daemon) return;
-		await ns.sleep(1000);
+		await ns.asleep(1000);
 	}
 }
 

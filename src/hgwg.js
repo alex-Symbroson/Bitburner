@@ -37,7 +37,7 @@ export async function main(ns)
         for (const s of srvd.getServers(s => s.purchasedByPlayer))
             if (s.hostname != 'home') ns.killall(s.hostname);
 
-        while (!hgwgServer(ns, s, ns.getPlayer())) await ns.sleep(10e3);
+        while (!hgwgServer(ns, s, ns.getPlayer())) await ns.asleep(10e3);
 
         ns.kill('enslave.js', 'home');
         for (const s of srvd.getServers(s => s.purchasedByPlayer))

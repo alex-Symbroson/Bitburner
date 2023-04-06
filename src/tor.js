@@ -17,7 +17,7 @@ export async function main(ns)
 	];
 
 	while (!ns.singularity.purchaseTor())
-		if (daemon) await ns.sleep(5e3);
+		if (daemon) await ns.asleep(5e3);
 		else return;
 
 	if (!ns.args.includes('-f')) items.pop();
@@ -26,7 +26,7 @@ export async function main(ns)
 	{
 		if (ns.singularity.purchaseProgram(items[0]))
 			items.shift();
-		else if (daemon) await ns.sleep(5e3);
+		else if (daemon) await ns.asleep(5e3);
 		else return;
 	}
 }

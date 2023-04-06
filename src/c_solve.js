@@ -346,10 +346,20 @@ function c1rlec(data)
 }
 
 
-/** @type {(data:any) => any} */
-function c2lzd(data)
+/** @type {(data:string, p?:string) => string} */
+function c2lzd(data, p = '')
 {
-
+	for (let i = 0; i < data.length; i++)
+	{
+		const len = data.charCodeAt(i++) - 48;
+		p += data.slice(i, i += len);
+		const refLen = data.charCodeAt(i) - 48;
+		if (!refLen) continue;
+		const off = data.charCodeAt(++i) - 48;
+		const ref = p.slice(- off, refLen < off ? refLen - off : undefined);
+		p += ref.repeat(refLen / ref.length) + ref.slice(0, refLen % ref.length);
+	}
+	return p;
 }
 
 

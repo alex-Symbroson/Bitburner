@@ -7,7 +7,7 @@ export async function main(ns)
     while (true)
     {
         buy_upgrade(ns);
-        await ns.sleep(5000);
+        await ns.asleep(5000);
     }
 }
 
